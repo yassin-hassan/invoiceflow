@@ -1,0 +1,10 @@
+
+# Private documents (ICC, context, notes)
+_private/
+
+# macOS
+.DS_Store
+
+# IntelliJ IDEA
+.idea/
+*.iml
