@@ -1,0 +1,2 @@
+-- V1__init_schema.sql
+-- Initial schema for InvoiceFlow
