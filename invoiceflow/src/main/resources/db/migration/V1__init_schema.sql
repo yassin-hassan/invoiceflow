@@ -10,28 +10,44 @@ CREATE TABLE addresses (
 );
 
 CREATE TABLE users (
-    id                            UUID            PRIMARY KEY,
-    email                         VARCHAR(255)    NOT NULL UNIQUE,
-    password_hash                 VARCHAR(255)    NOT NULL,
-    role                          VARCHAR(20)     NOT NULL DEFAULT 'USER',
+    id                            UUID         PRIMARY KEY,
+    email                         VARCHAR(255) NOT NULL UNIQUE,
+    password_hash                 VARCHAR(255) NOT NULL,
     first_name                    VARCHAR(100),
     last_name                     VARCHAR(100),
     company_name                  VARCHAR(255),
     phone                         VARCHAR(50),
     vat_number                    VARCHAR(50),
     logo_url                      VARCHAR(500),
-    preferred_language            VARCHAR(5)      NOT NULL DEFAULT 'FR',
-    billing_address_id            UUID            REFERENCES addresses(id),
-    is_active                     BOOLEAN         NOT NULL DEFAULT TRUE,
-    is_email_verified             BOOLEAN         NOT NULL DEFAULT FALSE,
+    preferred_language            VARCHAR(5)   NOT NULL DEFAULT 'FR',
+    billing_address_id            UUID         REFERENCES addresses(id),
+    is_active                     BOOLEAN      NOT NULL DEFAULT TRUE,
+    is_email_verified             BOOLEAN      NOT NULL DEFAULT FALSE,
     email_verification_token      VARCHAR(255),
     email_verification_expires_at TIMESTAMP,
     password_reset_token          VARCHAR(255),
     password_reset_expires_at     TIMESTAMP,
-    is_2fa_enabled                BOOLEAN         NOT NULL DEFAULT FALSE,
+    is_2fa_enabled                BOOLEAN      NOT NULL DEFAULT FALSE,
     two_fa_phone                  VARCHAR(50),
-    created_at                    TIMESTAMP       NOT NULL DEFAULT NOW(),
+    failed_attempts               INT          NOT NULL DEFAULT 0,
+    locked_until                  TIMESTAMP,
+    created_at                    TIMESTAMP    NOT NULL DEFAULT NOW(),
     last_login_at                 TIMESTAMP
+);
+
+-- ─── RBAC ────────────────────────────────────────────────────────────────────
+
+CREATE TABLE roles (
+    id   UUID        PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE user_roles (
+    user_id     UUID      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id     UUID      NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    assigned_by UUID      REFERENCES users(id),
+    PRIMARY KEY (user_id, role_id)
 );
 
 -- ─── Events ──────────────────────────────────────────────────────────────────
