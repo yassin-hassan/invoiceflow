@@ -23,16 +23,38 @@ CREATE TABLE users (
     billing_address_id            UUID         REFERENCES addresses(id),
     is_active                     BOOLEAN      NOT NULL DEFAULT TRUE,
     is_email_verified             BOOLEAN      NOT NULL DEFAULT FALSE,
-    email_verification_token      VARCHAR(255),
-    email_verification_expires_at TIMESTAMP,
-    password_reset_token          VARCHAR(255),
-    password_reset_expires_at     TIMESTAMP,
     is_2fa_enabled                BOOLEAN      NOT NULL DEFAULT FALSE,
     two_fa_phone                  VARCHAR(50),
     failed_attempts               INT          NOT NULL DEFAULT 0,
     locked_until                  TIMESTAMP,
     created_at                    TIMESTAMP    NOT NULL DEFAULT NOW(),
     last_login_at                 TIMESTAMP
+);
+
+-- ─── Verification tables ─────────────────────────────────────────────────────
+
+CREATE TABLE account_verifications (
+    id         UUID         PRIMARY KEY,
+    user_id    UUID         NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    token      VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP    NOT NULL,
+    created_at TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE reset_password_verifications (
+    id         UUID         PRIMARY KEY,
+    user_id    UUID         NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    token      VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP    NOT NULL,
+    created_at TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE two_factor_verifications (
+    id         UUID        PRIMARY KEY,
+    user_id    UUID        NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    code       VARCHAR(10) NOT NULL,
+    expires_at TIMESTAMP   NOT NULL,
+    created_at TIMESTAMP   NOT NULL DEFAULT NOW()
 );
 
 -- ─── RBAC ────────────────────────────────────────────────────────────────────
@@ -48,6 +70,17 @@ CREATE TABLE user_roles (
     assigned_at TIMESTAMP NOT NULL DEFAULT NOW(),
     assigned_by UUID      REFERENCES users(id),
     PRIMARY KEY (user_id, role_id)
+);
+
+CREATE TABLE permissions (
+    id   UUID         PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE role_permissions (
+    role_id       UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_id, permission_id)
 );
 
 -- ─── Events ──────────────────────────────────────────────────────────────────
