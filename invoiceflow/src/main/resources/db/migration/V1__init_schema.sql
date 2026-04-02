@@ -33,3 +33,21 @@ CREATE TABLE users (
     created_at                    TIMESTAMP       NOT NULL DEFAULT NOW(),
     last_login_at                 TIMESTAMP
 );
+
+-- ─── Events ──────────────────────────────────────────────────────────────────
+
+CREATE TABLE events (
+    id          UUID         PRIMARY KEY,
+    type        VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE user_events (
+    id         UUID         PRIMARY KEY,
+    user_id    UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_id   UUID         NOT NULL REFERENCES events(id) ON DELETE RESTRICT,
+    device     VARCHAR(255),
+    browser    VARCHAR(255),
+    ip_address VARCHAR(100),
+    created_at TIMESTAMP    NOT NULL DEFAULT NOW()
+);
