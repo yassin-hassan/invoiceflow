@@ -21,8 +21,6 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setPreferredLanguage("FR");
-        user.setActive(true);
-        return userRepository.create(user);
+        return userRepository.save(user);
     }
 }
