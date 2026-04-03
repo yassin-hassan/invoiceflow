@@ -13,6 +13,7 @@ spring:
     locations: classpath:db/migration
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     show-sql: true
