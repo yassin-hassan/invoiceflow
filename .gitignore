@@ -2,6 +2,9 @@
 # Private documents (ICC, context, notes)
 _private/
 
+# Environment variables
+.env
+
 # macOS
 .DS_Store
 
