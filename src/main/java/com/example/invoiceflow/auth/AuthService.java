@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AccountVerificationRepository verificationRepository;
+    private final EmailService emailService;
 
     public LoginResponse login(LoginRequest request) {
         var user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
@@ -63,6 +65,17 @@ public class AuthService {
         user.setEmailVerified(true);
         userRepository.save(user);
         verificationRepository.delete(verification);
+    }
+
+    @Transactional
+    public void resendVerification(String email) {
+        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
+            if (user.isEmailVerified()) return;
+            verificationRepository.deleteByUserId(user.getId());
+            String token = UUID.randomUUID().toString();
+            verificationRepository.save(new AccountVerification(user, token, LocalDateTime.now().plusHours(24)));
+            emailService.sendVerificationEmail(user.getEmail(), token);
+        });
     }
 
     private boolean isLocked(User user) {
