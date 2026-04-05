@@ -28,10 +28,11 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AccountVerificationRepository verificationRepository;
+    private final PasswordResetVerificationRepository passwordResetRepository;
     private final EmailService emailService;
 
     public LoginResponse login(LoginRequest request) {
-        var user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
+        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
         if (isLocked(user)) {
@@ -54,7 +55,7 @@ public class AuthService {
 
     @Transactional
     public void verifyEmail(String token) {
-        var verification = verificationRepository.findByToken(token)
+        AccountVerification verification = verificationRepository.findByToken(token)
                 .orElseThrow(() -> new BadCredentialsException("Invalid or expired verification token"));
 
         if (verification.isExpired()) {
@@ -76,6 +77,34 @@ public class AuthService {
             verificationRepository.save(new AccountVerification(user, token, LocalDateTime.now().plusHours(24)));
             emailService.sendVerificationEmail(user.getEmail(), token);
         });
+    }
+
+    @Transactional
+    public void forgotPassword(String email) {
+        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
+            passwordResetRepository.deleteByUserId(user.getId());
+            String token = UUID.randomUUID().toString();
+            passwordResetRepository.save(new PasswordResetVerification(user, token, LocalDateTime.now().plusHours(1)));
+            emailService.sendPasswordResetEmail(user.getEmail(), token);
+        });
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetVerification reset = passwordResetRepository.findByToken(token)
+                .orElseThrow(() -> new BadCredentialsException("Invalid or expired password reset token"));
+
+        if (reset.isExpired()) {
+            throw new BadCredentialsException("Invalid or expired password reset token");
+        }
+
+        User user = reset.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setEmailVerified(true);
+        user.setFailedAttempts(0);
+        user.setLockedUntil(null);
+        userRepository.save(user);
+        passwordResetRepository.delete(reset);
     }
 
     private boolean isLocked(User user) {
