@@ -39,6 +39,9 @@ class AuthServiceTest {
     private AccountVerificationRepository verificationRepository;
 
     @Mock
+    private PasswordResetVerificationRepository passwordResetRepository;
+
+    @Mock
     private EmailService emailService;
 
     @InjectMocks
@@ -160,6 +163,73 @@ class AuthServiceTest {
         when(verificationRepository.findByToken("expired-token")).thenReturn(Optional.of(verification));
 
         assertThatThrownBy(() -> authService.verifyEmail("expired-token"))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+
+    // --- forgotPassword ---
+
+    @Test
+    void forgotPassword_unknownEmail_doesNothing() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        authService.forgotPassword("unknown@example.com");
+
+        verifyNoInteractions(emailService);
+    }
+
+    @Test
+    void forgotPassword_knownEmail_deletesExistingTokenAndSendsEmail() {
+        user.setId(UUID.randomUUID());
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+
+        authService.forgotPassword("test@example.com");
+
+        verify(passwordResetRepository).deleteByUserId(user.getId());
+        verify(passwordResetRepository).save(any(PasswordResetVerification.class));
+        verify(emailService).sendPasswordResetEmail(eq("test@example.com"), any());
+    }
+
+    // --- resetPassword ---
+
+    @Test
+    void resetPassword_validToken_updatesPasswordAndVerifiesEmail() {
+        PasswordResetVerification reset = new PasswordResetVerification(user, "valid-token", LocalDateTime.now().plusHours(1));
+        when(passwordResetRepository.findByToken("valid-token")).thenReturn(Optional.of(reset));
+        when(passwordEncoder.encode("NewPassword1")).thenReturn("new-hashed");
+
+        authService.resetPassword("valid-token", "NewPassword1");
+
+        verify(userRepository).save(argThat(u -> u.getPasswordHash().equals("new-hashed") && u.isEmailVerified()));
+        verify(passwordResetRepository).delete(reset);
+    }
+
+    @Test
+    void resetPassword_validToken_clearsAccountLock() {
+        user.setFailedAttempts(5);
+        user.setLockedUntil(LocalDateTime.now().plusMinutes(10));
+        PasswordResetVerification reset = new PasswordResetVerification(user, "valid-token", LocalDateTime.now().plusHours(1));
+        when(passwordResetRepository.findByToken("valid-token")).thenReturn(Optional.of(reset));
+        when(passwordEncoder.encode(any())).thenReturn("new-hashed");
+
+        authService.resetPassword("valid-token", "NewPassword1");
+
+        verify(userRepository).save(argThat(u -> u.getFailedAttempts() == 0 && u.getLockedUntil() == null));
+    }
+
+    @Test
+    void resetPassword_invalidToken_throwsBadCredentials() {
+        when(passwordResetRepository.findByToken("bad-token")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.resetPassword("bad-token", "NewPassword1"))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void resetPassword_expiredToken_throwsBadCredentials() {
+        PasswordResetVerification reset = new PasswordResetVerification(user, "expired-token", LocalDateTime.now().minusHours(1));
+        when(passwordResetRepository.findByToken("expired-token")).thenReturn(Optional.of(reset));
+
+        assertThatThrownBy(() -> authService.resetPassword("expired-token", "NewPassword1"))
                 .isInstanceOf(BadCredentialsException.class);
     }
 
