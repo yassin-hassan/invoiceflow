@@ -82,6 +82,12 @@
 			<version>${aws.sdk.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.twilio.sdk</groupId>
+			<artifactId>twilio</artifactId>
+			<version>9.14.1</version>
+		</dependency>
+
+		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
 			<version>0.12.6</version>
@@ -150,6 +156,9 @@
 						<MAIL_USERNAME/>
 						<MAIL_PASSWORD/>
 						<S3_BUCKET>test-bucket</S3_BUCKET>
+						<TWILIO_ACCOUNT_SID>ACtest00000000000000000000000000000</TWILIO_ACCOUNT_SID>
+						<TWILIO_AUTH_TOKEN>test0000000000000000000000000000</TWILIO_AUTH_TOKEN>
+						<TWILIO_FROM_NUMBER>+15005550006</TWILIO_FROM_NUMBER>
 					</environmentVariables>
 				</configuration>
 			</plugin>

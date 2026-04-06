@@ -3,6 +3,9 @@ package com.example.invoiceflow.user;
 import com.example.invoiceflow.auth.AccountVerification;
 import com.example.invoiceflow.auth.AccountVerificationRepository;
 import com.example.invoiceflow.auth.EmailService;
+import com.example.invoiceflow.auth.TwoFactorVerificationRepository;
+import com.example.invoiceflow.auth.dto.Disable2faRequest;
+import com.example.invoiceflow.auth.dto.Enable2faRequest;
 import com.example.invoiceflow.exception.EmailAlreadyExistsException;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
 import com.example.invoiceflow.storage.StorageService;
@@ -26,6 +29,7 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final StorageService storageService;
     private final AccountVerificationRepository verificationRepository;
+    private final TwoFactorVerificationRepository twoFactorRepository;
     private final EmailService emailService;
 
     public User getByEmail(String email) {
@@ -86,6 +90,33 @@ public class UserService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void enable2fa(String email, Enable2faRequest request) {
+        User user = getByEmail(email);
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+
+        user.setTwoFaPhone(request.getPhone());
+        user.set2faEnabled(true);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void disable2fa(String email, Disable2faRequest request) {
+        User user = getByEmail(email);
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+
+        user.set2faEnabled(false);
+        user.setTwoFaPhone(null);
+        twoFactorRepository.deleteByUserId(user.getId());
         userRepository.save(user);
     }
 

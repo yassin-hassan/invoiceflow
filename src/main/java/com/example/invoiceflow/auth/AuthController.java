@@ -5,6 +5,7 @@ import com.example.invoiceflow.auth.dto.LoginRequest;
 import com.example.invoiceflow.auth.dto.LoginResponse;
 import com.example.invoiceflow.auth.dto.ResendVerificationRequest;
 import com.example.invoiceflow.auth.dto.ResetPasswordRequest;
+import com.example.invoiceflow.auth.dto.TwoFactorVerifyRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,5 +46,10 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/2fa/verify")
+    public ResponseEntity<LoginResponse> verifyTwoFactor(@Valid @RequestBody TwoFactorVerifyRequest request) {
+        return ResponseEntity.ok(authService.verifyTwoFactor(request));
     }
 }

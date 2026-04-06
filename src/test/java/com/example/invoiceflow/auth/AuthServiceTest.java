@@ -1,6 +1,7 @@
 package com.example.invoiceflow.auth;
 
 import com.example.invoiceflow.auth.dto.LoginRequest;
+import com.example.invoiceflow.auth.dto.TwoFactorVerifyRequest;
 import com.example.invoiceflow.exception.AccountLockedException;
 import com.example.invoiceflow.exception.EmailNotVerifiedException;
 import com.example.invoiceflow.security.JwtService;
@@ -9,6 +10,7 @@ import com.example.invoiceflow.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,7 +44,13 @@ class AuthServiceTest {
     private PasswordResetVerificationRepository passwordResetRepository;
 
     @Mock
+    private TwoFactorVerificationRepository twoFactorRepository;
+
+    @Mock
     private EmailService emailService;
+
+    @Mock
+    private SmsService smsService;
 
     @InjectMocks
     private AuthService authService;
@@ -265,5 +273,116 @@ class AuthServiceTest {
         verify(verificationRepository).deleteByUserId(user.getId());
         verify(verificationRepository).save(any(AccountVerification.class));
         verify(emailService).sendVerificationEmail(eq("test@example.com"), any());
+    }
+
+    // --- login with 2FA ---
+
+    @Test
+    void login_2faEnabled_returnsRequires2fa() {
+        user.setId(UUID.randomUUID());
+        user.set2faEnabled(true);
+        user.setTwoFaPhone("+33612345678");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
+
+        var response = authService.login(loginRequest("test@example.com", "password"));
+
+        assertThat(response.getRequires2fa()).isTrue();
+        assertThat(response.getToken()).isNull();
+    }
+
+    @Test
+    void login_2faEnabled_sendsSmsWith6DigitCode() {
+        user.setId(UUID.randomUUID());
+        user.set2faEnabled(true);
+        user.setTwoFaPhone("+33612345678");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
+
+        authService.login(loginRequest("test@example.com", "password"));
+
+        ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
+        verify(smsService).sendOtpSms(eq("+33612345678"), codeCaptor.capture());
+        assertThat(codeCaptor.getValue()).matches("\\d{6}");
+    }
+
+    @Test
+    void login_2faEnabled_savesVerificationRecord() {
+        user.setId(UUID.randomUUID());
+        user.set2faEnabled(true);
+        user.setTwoFaPhone("+33612345678");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
+
+        authService.login(loginRequest("test@example.com", "password"));
+
+        verify(twoFactorRepository).deleteByUserId(user.getId());
+        verify(twoFactorRepository).save(any(TwoFactorVerification.class));
+    }
+
+    @Test
+    void login_2faDisabled_returnsTokenDirectly() {
+        user.set2faEnabled(false);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
+        when(jwtService.generateToken("test@example.com")).thenReturn("jwt-token");
+
+        var response = authService.login(loginRequest("test@example.com", "password"));
+
+        assertThat(response.getToken()).isEqualTo("jwt-token");
+        assertThat(response.getRequires2fa()).isNull();
+        verifyNoInteractions(smsService);
+    }
+
+    // --- verifyTwoFactor ---
+
+    private TwoFactorVerifyRequest twoFactorRequest(String email, String code) {
+        var request = new TwoFactorVerifyRequest();
+        request.setEmail(email);
+        request.setCode(code);
+        return request;
+    }
+
+    @Test
+    void verifyTwoFactor_validCode_returnsToken() {
+        user.setId(UUID.randomUUID());
+        var verification = new TwoFactorVerification(user, "123456", LocalDateTime.now().plusMinutes(5));
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(twoFactorRepository.findByUserIdAndCode(user.getId(), "123456")).thenReturn(Optional.of(verification));
+        when(jwtService.generateToken("test@example.com")).thenReturn("jwt-token");
+
+        var response = authService.verifyTwoFactor(twoFactorRequest("test@example.com", "123456"));
+
+        assertThat(response.getToken()).isEqualTo("jwt-token");
+        verify(twoFactorRepository).delete(verification);
+    }
+
+    @Test
+    void verifyTwoFactor_unknownEmail_throwsBadCredentials() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.verifyTwoFactor(twoFactorRequest("unknown@example.com", "123456")))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void verifyTwoFactor_wrongCode_throwsBadCredentials() {
+        user.setId(UUID.randomUUID());
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(twoFactorRepository.findByUserIdAndCode(user.getId(), "000000")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.verifyTwoFactor(twoFactorRequest("test@example.com", "000000")))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void verifyTwoFactor_expiredCode_throwsBadCredentials() {
+        user.setId(UUID.randomUUID());
+        var verification = new TwoFactorVerification(user, "123456", LocalDateTime.now().minusMinutes(1));
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(twoFactorRepository.findByUserIdAndCode(user.getId(), "123456")).thenReturn(Optional.of(verification));
+
+        assertThatThrownBy(() -> authService.verifyTwoFactor(twoFactorRequest("test@example.com", "123456")))
+                .isInstanceOf(BadCredentialsException.class);
     }
 }

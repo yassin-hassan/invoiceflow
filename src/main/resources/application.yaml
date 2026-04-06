@@ -50,3 +50,7 @@ app:
     bucket: ${S3_BUCKET}
     region: ${AWS_REGION:eu-west-3}
     endpoint: ${S3_ENDPOINT:}
+  twilio:
+    account-sid: ${TWILIO_ACCOUNT_SID}
+    auth-token: ${TWILIO_AUTH_TOKEN}
+    from-number: ${TWILIO_FROM_NUMBER}

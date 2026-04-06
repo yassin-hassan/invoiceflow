@@ -1,5 +1,7 @@
 package com.example.invoiceflow.user;
 
+import com.example.invoiceflow.auth.dto.Disable2faRequest;
+import com.example.invoiceflow.auth.dto.Enable2faRequest;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
@@ -46,6 +48,22 @@ public class UserController {
             @AuthenticationPrincipal UserDetails principal,
             @Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(principal.getUsername(), request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/me/2fa/enable")
+    public ResponseEntity<Void> enable2fa(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody Enable2faRequest request) {
+        userService.enable2fa(principal.getUsername(), request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me/2fa")
+    public ResponseEntity<Void> disable2fa(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody Disable2faRequest request) {
+        userService.disable2fa(principal.getUsername(), request);
         return ResponseEntity.noContent().build();
     }
 

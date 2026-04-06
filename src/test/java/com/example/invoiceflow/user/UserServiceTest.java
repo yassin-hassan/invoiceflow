@@ -2,6 +2,8 @@ package com.example.invoiceflow.user;
 
 import com.example.invoiceflow.auth.AccountVerificationRepository;
 import com.example.invoiceflow.auth.EmailService;
+import com.example.invoiceflow.auth.dto.Disable2faRequest;
+import com.example.invoiceflow.auth.dto.Enable2faRequest;
 import com.example.invoiceflow.storage.StorageService;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
@@ -29,6 +31,7 @@ class UserServiceTest {
     @Mock private BCryptPasswordEncoder passwordEncoder;
     @Mock private StorageService storageService;
     @Mock private AccountVerificationRepository verificationRepository;
+    @Mock private com.example.invoiceflow.auth.TwoFactorVerificationRepository twoFactorRepository;
     @Mock private EmailService emailService;
 
     @InjectMocks
@@ -209,5 +212,74 @@ class UserServiceTest {
         userService.updateLogo("test@example.com", file);
 
         verify(storageService).deleteLogo(user.getId(), "image/png");
+    }
+
+    // --- enable2fa ---
+
+    @Test
+    void enable2fa_correctPassword_enablesAndSetsPhone() {
+        user.setPasswordHash("hashed");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Password1", "hashed")).thenReturn(true);
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Enable2faRequest request = new Enable2faRequest();
+        request.setPassword("Password1");
+        request.setPhone("+33612345678");
+
+        userService.enable2fa("test@example.com", request);
+
+        verify(userRepository).save(argThat(u -> u.is2faEnabled() && "+33612345678".equals(u.getTwoFaPhone())));
+    }
+
+    @Test
+    void enable2fa_wrongPassword_throwsBadCredentials() {
+        user.setPasswordHash("hashed");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("WrongPassword1", "hashed")).thenReturn(false);
+
+        Enable2faRequest request = new Enable2faRequest();
+        request.setPassword("WrongPassword1");
+        request.setPhone("+33612345678");
+
+        assertThatThrownBy(() -> userService.enable2fa("test@example.com", request))
+                .isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
+
+        verify(userRepository, never()).save(any());
+    }
+
+    // --- disable2fa ---
+
+    @Test
+    void disable2fa_correctPassword_disablesAndClearsPhone() {
+        user.setPasswordHash("hashed");
+        user.set2faEnabled(true);
+        user.setTwoFaPhone("+33612345678");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Password1", "hashed")).thenReturn(true);
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Disable2faRequest request = new Disable2faRequest();
+        request.setPassword("Password1");
+
+        userService.disable2fa("test@example.com", request);
+
+        verify(twoFactorRepository).deleteByUserId(user.getId());
+        verify(userRepository).save(argThat(u -> !u.is2faEnabled() && u.getTwoFaPhone() == null));
+    }
+
+    @Test
+    void disable2fa_wrongPassword_throwsBadCredentials() {
+        user.setPasswordHash("hashed");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("WrongPassword1", "hashed")).thenReturn(false);
+
+        Disable2faRequest request = new Disable2faRequest();
+        request.setPassword("WrongPassword1");
+
+        assertThatThrownBy(() -> userService.disable2fa("test@example.com", request))
+                .isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
+
+        verify(userRepository, never()).save(any());
     }
 }

@@ -1,5 +1,7 @@
 package com.example.invoiceflow.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,6 +15,16 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleUnexpected(Exception ex) {
+        log.error("Unhandled exception", ex);
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        problem.setTitle(ex.getClass().getSimpleName());
+        return problem;
+    }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ProblemDetail handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
