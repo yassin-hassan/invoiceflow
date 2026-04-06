@@ -2,6 +2,7 @@ package com.example.invoiceflow.user;
 
 import com.example.invoiceflow.auth.AccountVerificationRepository;
 import com.example.invoiceflow.auth.EmailService;
+import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -124,5 +126,40 @@ class UserServiceTest {
         // City updated, street preserved
         assertThat(updated.getBillingAddress().getCity()).isEqualTo("New City");
         assertThat(updated.getBillingAddress().getStreet()).isEqualTo("Old Street");
+    }
+
+    // --- changePassword ---
+
+    @Test
+    void changePassword_correctCurrentPassword_updatesHash() {
+        user.setPasswordHash("old-hashed");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("OldPassword1", "old-hashed")).thenReturn(true);
+        when(passwordEncoder.encode("NewPassword1")).thenReturn("new-hashed");
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ChangePasswordRequest request = new ChangePasswordRequest();
+        request.setCurrentPassword("OldPassword1");
+        request.setNewPassword("NewPassword1");
+
+        userService.changePassword("test@example.com", request);
+
+        verify(userRepository).save(argThat(u -> u.getPasswordHash().equals("new-hashed")));
+    }
+
+    @Test
+    void changePassword_wrongCurrentPassword_throwsBadCredentials() {
+        user.setPasswordHash("old-hashed");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("WrongPassword1", "old-hashed")).thenReturn(false);
+
+        ChangePasswordRequest request = new ChangePasswordRequest();
+        request.setCurrentPassword("WrongPassword1");
+        request.setNewPassword("NewPassword1");
+
+        assertThatThrownBy(() -> userService.changePassword("test@example.com", request))
+                .isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
+
+        verify(userRepository, never()).save(any());
     }
 }

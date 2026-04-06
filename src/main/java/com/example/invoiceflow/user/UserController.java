@@ -1,5 +1,6 @@
 package com.example.invoiceflow.user;
 
+import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import com.example.invoiceflow.user.dto.UserResponse;
@@ -36,5 +37,13 @@ public class UserController {
             @Valid @RequestBody UpdateProfileRequest request) {
         User updated = userService.updateProfile(principal.getUsername(), request);
         return ResponseEntity.ok(userMapper.toResponse(updated));
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(principal.getUsername(), request);
+        return ResponseEntity.noContent().build();
     }
 }

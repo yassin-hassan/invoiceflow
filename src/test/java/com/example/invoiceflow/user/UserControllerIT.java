@@ -166,4 +166,61 @@ class UserControllerIT extends PostgresTestContainer {
                         """))
                 .andExpect(status().isForbidden());
     }
+
+    // --- PUT /api/users/me/password ---
+
+    @Test
+    void changePassword_correctCurrentPassword_returns204() throws Exception {
+        mockMvc.perform(put("/api/users/me/password")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "currentPassword": "Password1",
+                          "newPassword": "NewPassword1"
+                        }
+                        """))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void changePassword_wrongCurrentPassword_returns401() throws Exception {
+        mockMvc.perform(put("/api/users/me/password")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "currentPassword": "WrongPassword1",
+                          "newPassword": "NewPassword1"
+                        }
+                        """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void changePassword_weakNewPassword_returns400() throws Exception {
+        mockMvc.perform(put("/api/users/me/password")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "currentPassword": "Password1",
+                          "newPassword": "weak"
+                        }
+                        """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changePassword_withoutToken_returns403() throws Exception {
+        mockMvc.perform(put("/api/users/me/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "currentPassword": "Password1",
+                          "newPassword": "NewPassword1"
+                        }
+                        """))
+                .andExpect(status().isForbidden());
+    }
 }
