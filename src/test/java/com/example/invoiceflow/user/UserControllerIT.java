@@ -2,18 +2,26 @@ package com.example.invoiceflow.user;
 
 import com.example.invoiceflow.PostgresTestContainer;
 import com.example.invoiceflow.security.JwtService;
+import com.example.invoiceflow.storage.StorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.example.invoiceflow.exception.InvalidFileException;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,10 +31,11 @@ class UserControllerIT extends PostgresTestContainer {
 
     @Autowired private WebApplicationContext context;
     @Autowired private UserRepository userRepository;
-
-    private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @MockitoBean private StorageService storageService;
+
+    private MockMvc mockMvc;
 
     private String token;
 
@@ -221,6 +230,44 @@ class UserControllerIT extends PostgresTestContainer {
                           "newPassword": "NewPassword1"
                         }
                         """))
+                .andExpect(status().isForbidden());
+    }
+
+    // --- POST /api/users/me/logo ---
+
+    @Test
+    void uploadLogo_validPng_returnsUpdatedLogoUrl() throws Exception {
+        when(storageService.uploadLogo(any(), any()))
+                .thenReturn("https://bucket.s3.eu-west-3.amazonaws.com/logos/user.png");
+
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", new byte[100]);
+
+        mockMvc.perform(multipart("/api/users/me/logo")
+                .file(file)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.logoUrl").value("https://bucket.s3.eu-west-3.amazonaws.com/logos/user.png"));
+    }
+
+    @Test
+    void uploadLogo_invalidType_returns400() throws Exception {
+        when(storageService.uploadLogo(any(), any()))
+                .thenThrow(new InvalidFileException("Only JPEG and PNG images are allowed"));
+
+        MockMultipartFile file = new MockMultipartFile("file", "logo.gif", "image/gif", new byte[100]);
+
+        mockMvc.perform(multipart("/api/users/me/logo")
+                .file(file)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void uploadLogo_withoutToken_returns403() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", new byte[100]);
+
+        mockMvc.perform(multipart("/api/users/me/logo")
+                .file(file))
                 .andExpect(status().isForbidden());
     }
 }

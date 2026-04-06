@@ -5,6 +5,7 @@ import com.example.invoiceflow.auth.AccountVerificationRepository;
 import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.exception.EmailAlreadyExistsException;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
+import com.example.invoiceflow.storage.StorageService;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -22,6 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final StorageService storageService;
     private final AccountVerificationRepository verificationRepository;
     private final EmailService emailService;
 
@@ -84,5 +87,19 @@ public class UserService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public User updateLogo(String email, MultipartFile file) {
+        User user = getByEmail(email);
+
+        if (user.getLogoUrl() != null) {
+            String contentType = user.getLogoUrl().endsWith(".png") ? "image/png" : "image/jpeg";
+            storageService.deleteLogo(user.getId(), contentType);
+        }
+
+        String logoUrl = storageService.uploadLogo(user.getId(), file);
+        user.setLogoUrl(logoUrl);
+        return userRepository.save(user);
     }
 }

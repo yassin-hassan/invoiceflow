@@ -29,6 +29,7 @@
 	<properties>
 		<java.version>25</java.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
+		<aws.sdk.version>2.26.12</aws.sdk.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -74,6 +75,11 @@
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>${mapstruct.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>${aws.sdk.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
@@ -143,6 +149,7 @@
 						<JWT_SECRET>a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2</JWT_SECRET>
 						<MAIL_USERNAME/>
 						<MAIL_PASSWORD/>
+						<S3_BUCKET>test-bucket</S3_BUCKET>
 					</environmentVariables>
 				</configuration>
 			</plugin>

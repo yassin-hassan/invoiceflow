@@ -6,10 +6,12 @@ import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import com.example.invoiceflow.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
@@ -45,5 +47,13 @@ public class UserController {
             @Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(principal.getUsername(), request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/me/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> uploadLogo(
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestParam("file") MultipartFile file) {
+        User updated = userService.updateLogo(principal.getUsername(), file);
+        return ResponseEntity.ok(userMapper.toResponse(updated));
     }
 }

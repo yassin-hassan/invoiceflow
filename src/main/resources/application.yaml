@@ -33,6 +33,11 @@ spring:
           starttls:
             enable: false
 
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
@@ -41,3 +46,7 @@ app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
   mail:
     from: ${MAIL_FROM:noreply@invoiceflow.app}
+  storage:
+    bucket: ${S3_BUCKET}
+    region: ${AWS_REGION:eu-west-3}
+    endpoint: ${S3_ENDPOINT:}

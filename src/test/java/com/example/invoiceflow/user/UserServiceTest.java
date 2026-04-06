@@ -2,9 +2,11 @@ package com.example.invoiceflow.user;
 
 import com.example.invoiceflow.auth.AccountVerificationRepository;
 import com.example.invoiceflow.auth.EmailService;
+import com.example.invoiceflow.storage.StorageService;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.mock.web.MockMultipartFile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +27,7 @@ class UserServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private BCryptPasswordEncoder passwordEncoder;
+    @Mock private StorageService storageService;
     @Mock private AccountVerificationRepository verificationRepository;
     @Mock private EmailService emailService;
 
@@ -161,5 +164,50 @@ class UserServiceTest {
                 .isInstanceOf(org.springframework.security.authentication.BadCredentialsException.class);
 
         verify(userRepository, never()).save(any());
+    }
+
+    // --- updateLogo ---
+
+    @Test
+    void updateLogo_noExistingLogo_uploadsAndSavesUrl() {
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(storageService.uploadLogo(any(), any())).thenReturn("https://bucket.s3.eu-west-3.amazonaws.com/logos/uuid.jpg");
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        MockMultipartFile file = new MockMultipartFile("file", "logo.jpg", "image/jpeg", new byte[100]);
+
+        User updated = userService.updateLogo("test@example.com", file);
+
+        assertThat(updated.getLogoUrl()).isEqualTo("https://bucket.s3.eu-west-3.amazonaws.com/logos/uuid.jpg");
+        verify(storageService).uploadLogo(user.getId(), file);
+    }
+
+    @Test
+    void updateLogo_existingJpegLogo_deletesOldBeforeUploading() {
+        user.setLogoUrl("https://bucket.s3.eu-west-3.amazonaws.com/logos/uuid.jpg");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(storageService.uploadLogo(any(), any())).thenReturn("https://bucket.s3.eu-west-3.amazonaws.com/logos/uuid.jpg");
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        MockMultipartFile file = new MockMultipartFile("file", "logo.jpg", "image/jpeg", new byte[100]);
+
+        userService.updateLogo("test@example.com", file);
+
+        verify(storageService).deleteLogo(user.getId(), "image/jpeg");
+        verify(storageService).uploadLogo(user.getId(), file);
+    }
+
+    @Test
+    void updateLogo_existingPngLogo_deletesWithPngContentType() {
+        user.setLogoUrl("https://bucket.s3.eu-west-3.amazonaws.com/logos/uuid.png");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(storageService.uploadLogo(any(), any())).thenReturn("https://bucket.s3.eu-west-3.amazonaws.com/logos/uuid.png");
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", new byte[100]);
+
+        userService.updateLogo("test@example.com", file);
+
+        verify(storageService).deleteLogo(user.getId(), "image/png");
     }
 }

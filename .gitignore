@@ -4,6 +4,7 @@ _private/
 
 # Environment variables
 .env
+run.sh
 
 # macOS
 .DS_Store
