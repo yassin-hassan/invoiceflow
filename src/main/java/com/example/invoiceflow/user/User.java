@@ -41,6 +41,10 @@ public class User {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "billing_address_id")
+    private Address billingAddress;
+
     @Column(name = "preferred_language", nullable = false)
     private String preferredLanguage = "FR";
 

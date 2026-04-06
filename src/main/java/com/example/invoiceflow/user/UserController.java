@@ -1,6 +1,7 @@
 package com.example.invoiceflow.user;
 
 import com.example.invoiceflow.user.dto.CreateUserRequest;
+import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import com.example.invoiceflow.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,28 +16,25 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final UserMapper userMapper;
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         User created = userService.createUser(request);
-        UserResponse response = new UserResponse();
-        response.setId(created.getId());
-        response.setEmail(created.getEmail());
-        response.setFirstName(created.getFirstName());
-        response.setLastName(created.getLastName());
-        response.setCreatedAt(created.getCreatedAt());
-        return ResponseEntity.status(201).body(response);
+        return ResponseEntity.status(201).body(userMapper.toResponse(created));
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal UserDetails principal) {
         User user = userService.getByEmail(principal.getUsername());
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setEmail(user.getEmail());
-        response.setFirstName(user.getFirstName());
-        response.setLastName(user.getLastName());
-        response.setCreatedAt(user.getCreatedAt());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(userMapper.toResponse(user));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateMe(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody UpdateProfileRequest request) {
+        User updated = userService.updateProfile(principal.getUsername(), request);
+        return ResponseEntity.ok(userMapper.toResponse(updated));
     }
 }

@@ -5,6 +5,7 @@ import com.example.invoiceflow.auth.AccountVerificationRepository;
 import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.exception.EmailAlreadyExistsException;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
+import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,5 +46,29 @@ public class UserService {
         emailService.sendVerificationEmail(email, token);
 
         return user;
+    }
+
+    @Transactional
+    public User updateProfile(String email, UpdateProfileRequest request) {
+        User user = getByEmail(email);
+
+        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) user.setLastName(request.getLastName());
+        if (request.getCompanyName() != null) user.setCompanyName(request.getCompanyName());
+        if (request.getPhone() != null) user.setPhone(request.getPhone());
+        if (request.getVatNumber() != null) user.setVatNumber(request.getVatNumber());
+        if (request.getPreferredLanguage() != null) user.setPreferredLanguage(request.getPreferredLanguage());
+
+        if (request.getBillingAddress() != null) {
+            UpdateProfileRequest.AddressRequest addrReq = request.getBillingAddress();
+            Address address = user.getBillingAddress() != null ? user.getBillingAddress() : new Address();
+            if (addrReq.getStreet() != null) address.setStreet(addrReq.getStreet());
+            if (addrReq.getPostalCode() != null) address.setPostalCode(addrReq.getPostalCode());
+            if (addrReq.getCity() != null) address.setCity(addrReq.getCity());
+            if (addrReq.getCountry() != null) address.setCountry(addrReq.getCountry());
+            user.setBillingAddress(address);
+        }
+
+        return userRepository.save(user);
     }
 }
