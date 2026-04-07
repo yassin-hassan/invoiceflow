@@ -2,6 +2,7 @@ package com.example.invoiceflow.user;
 
 import com.example.invoiceflow.auth.dto.Disable2faRequest;
 import com.example.invoiceflow.auth.dto.Enable2faRequest;
+import com.example.invoiceflow.user.dto.ChangeLanguageRequest;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
@@ -41,6 +42,14 @@ public class UserController {
             @Valid @RequestBody UpdateProfileRequest request) {
         User updated = userService.updateProfile(principal.getUsername(), request);
         return ResponseEntity.ok(userMapper.toResponse(updated));
+    }
+
+    @PatchMapping("/me/language")
+    public ResponseEntity<Void> changeLanguage(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody ChangeLanguageRequest request) {
+        userService.changeLanguage(principal.getUsername(), request);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/me/password")

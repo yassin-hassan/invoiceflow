@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -172,6 +173,54 @@ class UserControllerIT extends PostgresTestContainer {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         { "firstName": "Jane" }
+                        """))
+                .andExpect(status().isForbidden());
+    }
+
+    // --- PATCH /api/users/me/language ---
+
+    @Test
+    void changeLanguage_validLanguage_returns204AndPersists() throws Exception {
+        mockMvc.perform(patch("/api/users/me/language")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        { "language": "EN" }
+                        """))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/users/me")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.preferredLanguage").value("EN"));
+    }
+
+    @Test
+    void changeLanguage_invalidLanguage_returns400() throws Exception {
+        mockMvc.perform(patch("/api/users/me/language")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        { "language": "DE" }
+                        """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changeLanguage_missingLanguage_returns400() throws Exception {
+        mockMvc.perform(patch("/api/users/me/language")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changeLanguage_withoutToken_returns403() throws Exception {
+        mockMvc.perform(patch("/api/users/me/language")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        { "language": "EN" }
                         """))
                 .andExpect(status().isForbidden());
     }

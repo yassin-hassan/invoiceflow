@@ -5,6 +5,7 @@ import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.auth.dto.Disable2faRequest;
 import com.example.invoiceflow.auth.dto.Enable2faRequest;
 import com.example.invoiceflow.storage.StorageService;
+import com.example.invoiceflow.user.dto.ChangeLanguageRequest;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -132,6 +133,35 @@ class UserServiceTest {
         // City updated, street preserved
         assertThat(updated.getBillingAddress().getCity()).isEqualTo("New City");
         assertThat(updated.getBillingAddress().getStreet()).isEqualTo("Old Street");
+    }
+
+    // --- changeLanguage ---
+
+    @Test
+    void changeLanguage_updatesPreferredLanguage() {
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ChangeLanguageRequest request = new ChangeLanguageRequest();
+        request.setLanguage("EN");
+
+        userService.changeLanguage("test@example.com", request);
+
+        verify(userRepository).save(argThat(u -> "EN".equals(u.getPreferredLanguage())));
+    }
+
+    @Test
+    void changeLanguage_backToFr_updatesPreferredLanguage() {
+        user.setPreferredLanguage("EN");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ChangeLanguageRequest request = new ChangeLanguageRequest();
+        request.setLanguage("FR");
+
+        userService.changeLanguage("test@example.com", request);
+
+        verify(userRepository).save(argThat(u -> "FR".equals(u.getPreferredLanguage())));
     }
 
     // --- changePassword ---

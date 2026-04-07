@@ -9,6 +9,7 @@ import com.example.invoiceflow.auth.dto.Enable2faRequest;
 import com.example.invoiceflow.exception.EmailAlreadyExistsException;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
 import com.example.invoiceflow.storage.StorageService;
+import com.example.invoiceflow.user.dto.ChangeLanguageRequest;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,13 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changeLanguage(String email, ChangeLanguageRequest request) {
+        User user = getByEmail(email);
+        user.setPreferredLanguage(request.getLanguage());
+        userRepository.save(user);
     }
 
     @Transactional
