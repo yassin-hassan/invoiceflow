@@ -67,6 +67,7 @@ public class AuthService {
     LoginResponse initiate2fa(User user) {
         String code = String.format("%06d", secureRandom.nextInt(1_000_000));
         twoFactorRepository.deleteByUserId(user.getId());
+        twoFactorRepository.flush();
         twoFactorRepository.save(new TwoFactorVerification(user, code, LocalDateTime.now().plusMinutes(OTP_TTL_MINUTES)));
         smsService.sendOtpSms(user.getTwoFaPhone(), code);
         return LoginResponse.requires2fa();
