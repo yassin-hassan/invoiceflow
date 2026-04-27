@@ -40,12 +40,20 @@ export class AuthService {
     );
   }
 
-  register(data: any): Observable<void> {
-    return this.http.post<void>(`${API}/auth/register`, data);
+  register(data: any): Observable<unknown> {
+    return this.http.post(`${API}/users`, data);
+  }
+
+  verifyEmail(token: string): Observable<void> {
+    return this.http.get<void>(`${API}/auth/verify`, { params: { token } });
   }
 
   forgotPassword(email: string): Observable<void> {
     return this.http.post<void>(`${API}/auth/forgot-password`, { email });
+  }
+
+  resendVerification(email: string): Observable<void> {
+    return this.http.post<void>(`${API}/auth/resend-verification`, { email });
   }
 
   resetPassword(token: string, newPassword: string): Observable<void> {

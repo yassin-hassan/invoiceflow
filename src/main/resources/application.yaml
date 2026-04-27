@@ -43,7 +43,7 @@ jwt:
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 app:
-  base-url: ${APP_BASE_URL:http://localhost:8080}
+  base-url: ${APP_BASE_URL:http://localhost:4200}
   mail:
     from: ${MAIL_FROM:noreply@invoiceflow.app}
   storage:

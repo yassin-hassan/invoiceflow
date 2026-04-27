@@ -7,13 +7,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule,
+    CommonModule, ReactiveFormsModule, RouterLink,
     MatCardModule, MatFormFieldModule, MatInputModule,
     MatButtonModule, MatIconModule
   ],
@@ -37,9 +38,23 @@ import { AuthService } from '../../../core/services/auth.service';
               <input matInput formControlName="password" type="password" />
             </mat-form-field>
             <p *ngIf="error" style="color: red; font-size:0.85rem;">{{ error }}</p>
+            <p *ngIf="info" style="color: #2e7d32; font-size:0.85rem;">{{ info }}</p>
+            <button
+              *ngIf="needsVerification"
+              mat-stroked-button
+              color="primary"
+              type="button"
+              style="width:100%; margin-top:8px;"
+              [disabled]="resending"
+              (click)="onResendVerification()">
+              {{ resending ? 'Sending...' : 'Resend verification email' }}
+            </button>
             <button mat-raised-button color="primary" style="width:100%; margin-top:8px;" type="submit" [disabled]="loading">
               {{ loading ? 'Signing in...' : 'Sign in' }}
             </button>
+            <p style="text-align:center; margin-top:16px; font-size:0.875rem;">
+              No account yet? <a routerLink="/register">Sign up</a>
+            </p>
           </form>
 
           <!-- 2FA form -->
@@ -65,7 +80,10 @@ export class LoginComponent {
   twoFactorForm: FormGroup;
   showTwoFactor = false;
   loading = false;
+  resending = false;
+  needsVerification = false;
   error = '';
+  info = '';
 
   constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {
     this.loginForm = this.fb.group({
@@ -81,6 +99,8 @@ export class LoginComponent {
     if (this.loginForm.invalid) return;
     this.loading = true;
     this.error = '';
+    this.info = '';
+    this.needsVerification = false;
     const { email, password } = this.loginForm.value;
 
     this.auth.login({ email, password }).subscribe({
@@ -91,11 +111,37 @@ export class LoginComponent {
         } else if (res.token) {
           this.auth.saveToken(res.token);
           this.router.navigate(['/dashboard']);
+        } else {
+          this.error = 'Unexpected response from server. Please try again.';
         }
       },
       error: err => {
         this.loading = false;
-        this.error = err.error?.detail || 'Invalid credentials';
+        if (err.status === 403) {
+          this.needsVerification = true;
+          this.error = err.error?.detail || 'Email address not verified.';
+        } else {
+          this.error = err.error?.detail || 'Invalid credentials';
+        }
+      }
+    });
+  }
+
+  onResendVerification(): void {
+    const email = this.loginForm.value.email;
+    if (!email) return;
+    this.resending = true;
+    this.error = '';
+    this.info = '';
+    this.auth.resendVerification(email).subscribe({
+      next: () => {
+        this.resending = false;
+        this.needsVerification = false;
+        this.info = 'Verification email sent. Check your inbox.';
+      },
+      error: err => {
+        this.resending = false;
+        this.error = err.error?.detail || 'Could not resend verification email.';
       }
     });
   }

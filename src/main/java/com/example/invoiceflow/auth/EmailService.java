@@ -19,7 +19,7 @@ public class EmailService {
     private String baseUrl;
 
     public void sendVerificationEmail(String to, String token) {
-        String link = baseUrl + "/api/auth/verify?token=" + token;
+        String link = baseUrl + "/verify?token=" + token;
         String html = """
                 <p>Bonjour,</p>
                 <p>Merci de vous être inscrit sur <strong>InvoiceFlow</strong>.</p>
@@ -45,16 +45,18 @@ public class EmailService {
     }
 
     private void send(String to, String subject, String htmlBody) {
-        try {
-            var message = mailSender.createMimeMessage();
-            var helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setFrom(from);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to send email to " + to, e);
-        }
+        Thread.ofVirtual().start(() -> {
+            try {
+                var message = mailSender.createMimeMessage();
+                var helper = new MimeMessageHelper(message, "UTF-8");
+                helper.setFrom(from);
+                helper.setTo(to);
+                helper.setSubject(subject);
+                helper.setText(htmlBody, true);
+                mailSender.send(message);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to send email to " + to, e);
+            }
+        });
     }
 }
