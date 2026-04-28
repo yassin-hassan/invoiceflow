@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { extractErrorDetail } from '../../../core/utils/http-errors';
 
 @Component({
   selector: 'app-login',
@@ -119,9 +120,9 @@ export class LoginComponent {
         this.loading.set(false);
         if (err.status === 403) {
           this.needsVerification.set(true);
-          this.error.set(err.error?.detail || 'Email address not verified.');
+          this.error.set(extractErrorDetail(err, 'Email address not verified.'));
         } else {
-          this.error.set(err.error?.detail || 'Invalid credentials');
+          this.error.set(extractErrorDetail(err, 'Invalid credentials'));
         }
       }
     });
@@ -141,7 +142,7 @@ export class LoginComponent {
       },
       error: err => {
         this.resending.set(false);
-        this.error.set(err.error?.detail || 'Could not resend verification email.');
+        this.error.set(extractErrorDetail(err, 'Could not resend verification email.'));
       }
     });
   }
@@ -160,7 +161,7 @@ export class LoginComponent {
       },
       error: err => {
         this.loading.set(false);
-        this.error.set(err.error?.detail || 'Invalid code');
+        this.error.set(extractErrorDetail(err, 'Invalid code'));
       }
     });
   }

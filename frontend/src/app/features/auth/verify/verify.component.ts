@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/services/auth.service';
+import { extractErrorDetail } from '../../../core/utils/http-errors';
 
 @Component({
   selector: 'app-verify',
@@ -56,13 +57,8 @@ export class VerifyComponent implements OnInit {
       next: () => { this.loading.set(false); this.success.set(true); },
       error: err => {
         this.loading.set(false);
-        const detail = typeof err.error === 'string' ? this.tryParseDetail(err.error) : err.error?.detail;
-        if (detail) this.error.set(detail);
+        this.error.set(extractErrorDetail(err, this.error()));
       }
     });
-  }
-
-  private tryParseDetail(body: string): string | undefined {
-    try { return JSON.parse(body)?.detail; } catch { return undefined; }
   }
 }

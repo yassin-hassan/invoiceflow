@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService, RegisterRequest } from '../../../core/services/auth.service';
+import { extractErrorDetail, extractFieldErrors } from '../../../core/utils/http-errors';
 
 @Component({
   selector: 'app-register',
@@ -113,11 +114,12 @@ export class RegisterComponent {
       },
       error: err => {
         this.loading.set(false);
-        if (err.status === 400 && err.error?.errors) {
-          this.serverErrors.set(err.error.errors);
+        const fieldErrors = extractFieldErrors(err);
+        if (fieldErrors) {
+          this.serverErrors.set(fieldErrors);
           this.error.set('');
         } else {
-          this.error.set(err.error?.detail || 'Registration failed. Please try again.');
+          this.error.set(extractErrorDetail(err, 'Registration failed. Please try again.'));
         }
       }
     });
