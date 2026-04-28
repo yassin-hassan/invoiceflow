@@ -1,8 +1,11 @@
 package com.example.invoiceflow.client;
 
 import com.example.invoiceflow.client.dto.CreateClientRequest;
+import com.example.invoiceflow.client.dto.DeleteClientResponse;
 import com.example.invoiceflow.client.dto.UpdateClientRequest;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
+import com.example.invoiceflow.invoice.InvoiceRepository;
+import com.example.invoiceflow.quote.QuoteRepository;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +28,8 @@ import static org.mockito.Mockito.*;
 class ClientServiceTest {
 
     @Mock private ClientRepository clientRepository;
+    @Mock private QuoteRepository quoteRepository;
+    @Mock private InvoiceRepository invoiceRepository;
     @Mock private UserService userService;
 
     @InjectMocks
@@ -175,14 +180,32 @@ class ClientServiceTest {
     // --- deleteClient ---
 
     @Test
-    void deleteClient_softDeletesClient() {
+    void deleteClient_withDocs_softDeletes() {
         when(userService.getByEmail("user@example.com")).thenReturn(user);
         when(clientRepository.findByIdAndUser(client.getId(), user)).thenReturn(Optional.of(client));
+        when(quoteRepository.existsByClient(client)).thenReturn(false);
+        when(invoiceRepository.existsByClient(client)).thenReturn(true);
         when(clientRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        clientService.deleteClient("user@example.com", client.getId());
+        DeleteClientResponse res = clientService.deleteClient("user@example.com", client.getId());
 
+        assertThat(res.getMode()).isEqualTo(DeleteClientResponse.Mode.ARCHIVED);
         verify(clientRepository).save(argThat(c -> !c.isActive()));
+        verify(clientRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteClient_withoutDocs_hardDeletes() {
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(clientRepository.findByIdAndUser(client.getId(), user)).thenReturn(Optional.of(client));
+        when(quoteRepository.existsByClient(client)).thenReturn(false);
+        when(invoiceRepository.existsByClient(client)).thenReturn(false);
+
+        DeleteClientResponse res = clientService.deleteClient("user@example.com", client.getId());
+
+        assertThat(res.getMode()).isEqualTo(DeleteClientResponse.Mode.DELETED);
+        verify(clientRepository).delete(client);
+        verify(clientRepository, never()).save(any());
     }
 
     @Test

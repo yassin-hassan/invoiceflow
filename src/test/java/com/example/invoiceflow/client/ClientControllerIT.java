@@ -192,7 +192,7 @@ class ClientControllerIT extends PostgresTestContainer {
     // --- DELETE /api/clients/{id} ---
 
     @Test
-    void deleteClient_existingClient_returns204AndSoftDeletes() throws Exception {
+    void deleteClient_noDocuments_hardDeletes() throws Exception {
         String response = mockMvc.perform(post("/api/clients")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -207,9 +207,10 @@ class ClientControllerIT extends PostgresTestContainer {
 
         mockMvc.perform(delete("/api/clients/" + id)
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mode").value("DELETED"));
 
-        // soft deleted — should no longer appear in list
+        // gone from list
         mockMvc.perform(get("/api/clients")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())

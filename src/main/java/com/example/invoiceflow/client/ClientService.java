@@ -1,8 +1,11 @@
 package com.example.invoiceflow.client;
 
 import com.example.invoiceflow.client.dto.CreateClientRequest;
+import com.example.invoiceflow.client.dto.DeleteClientResponse;
 import com.example.invoiceflow.client.dto.UpdateClientRequest;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
+import com.example.invoiceflow.invoice.InvoiceRepository;
+import com.example.invoiceflow.quote.QuoteRepository;
 import com.example.invoiceflow.user.Address;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
@@ -18,6 +21,8 @@ import java.util.UUID;
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final QuoteRepository quoteRepository;
+    private final InvoiceRepository invoiceRepository;
     private final UserService userService;
 
     public List<Client> getClients(String email) {
@@ -89,15 +94,19 @@ public class ClientService {
     }
 
     @Transactional
-    public void deleteClient(String email, UUID clientId) {
+    public DeleteClientResponse deleteClient(String email, UUID clientId) {
         User user = userService.getByEmail(email);
         Client client = clientRepository.findByIdAndUser(clientId, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
 
-        // TODO: check if client has quotes or invoices — soft delete if so, hard delete if not
-        // For now, always soft delete
-        client.setActive(false);
-        clientRepository.save(client);
+        boolean hasDocs = quoteRepository.existsByClient(client) || invoiceRepository.existsByClient(client);
+        if (hasDocs) {
+            client.setActive(false);
+            clientRepository.save(client);
+            return new DeleteClientResponse(DeleteClientResponse.Mode.ARCHIVED);
+        }
+        clientRepository.delete(client);
+        return new DeleteClientResponse(DeleteClientResponse.Mode.DELETED);
     }
 
     private Address buildAddress(CreateClientRequest.AddressRequest req) {

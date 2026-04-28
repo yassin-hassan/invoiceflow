@@ -2,6 +2,7 @@ package com.example.invoiceflow.client;
 
 import com.example.invoiceflow.client.dto.ClientResponse;
 import com.example.invoiceflow.client.dto.CreateClientRequest;
+import com.example.invoiceflow.client.dto.DeleteClientResponse;
 import com.example.invoiceflow.client.dto.UpdateClientRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -57,10 +58,9 @@ public class ClientController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteClient(
+    public ResponseEntity<DeleteClientResponse> deleteClient(
             @AuthenticationPrincipal UserDetails principal,
             @PathVariable UUID id) {
-        clientService.deleteClient(principal.getUsername(), id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(clientService.deleteClient(principal.getUsername(), id));
     }
 }

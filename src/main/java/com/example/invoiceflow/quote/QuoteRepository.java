@@ -1,5 +1,6 @@
 package com.example.invoiceflow.quote;
 
+import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.user.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface QuoteRepository extends JpaRepository<Quote, UUID> {
+
+    boolean existsByClient(Client client);
+
 
     @EntityGraph(attributePaths = {"client", "lines", "lines.product"})
     List<Quote> findByUserOrderByCreatedAtDesc(User user);

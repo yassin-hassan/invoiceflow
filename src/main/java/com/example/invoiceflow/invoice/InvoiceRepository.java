@@ -1,5 +1,6 @@
 package com.example.invoiceflow.invoice;
 
+import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.user.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
+
+    boolean existsByClient(Client client);
+
 
     @EntityGraph(attributePaths = {"client", "lines", "lines.product", "payments", "quote"})
     List<Invoice> findByUserOrderByCreatedAtDesc(User user);
