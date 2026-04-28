@@ -22,6 +22,13 @@ export interface TwoFactorRequest {
   code: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isLoggedIn = signal<boolean>(this.hasToken());
@@ -40,12 +47,12 @@ export class AuthService {
     );
   }
 
-  register(data: any): Observable<unknown> {
+  register(data: RegisterRequest): Observable<unknown> {
     return this.http.post(`${API}/users`, data);
   }
 
-  verifyEmail(token: string): Observable<void> {
-    return this.http.get<void>(`${API}/auth/verify`, { params: { token } });
+  verifyEmail(token: string): Observable<unknown> {
+    return this.http.get(`${API}/auth/verify`, { params: { token }, responseType: 'text' });
   }
 
   forgotPassword(email: string): Observable<void> {
