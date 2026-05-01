@@ -1,8 +1,8 @@
 package com.example.invoiceflow.client;
 
 import com.example.invoiceflow.client.dto.CreateClientRequest;
-import com.example.invoiceflow.client.dto.DeleteClientResponse;
 import com.example.invoiceflow.client.dto.UpdateClientRequest;
+import com.example.invoiceflow.common.dto.DeleteResponse;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
 import com.example.invoiceflow.invoice.InvoiceRepository;
 import com.example.invoiceflow.quote.QuoteRepository;
@@ -94,7 +94,7 @@ public class ClientService {
     }
 
     @Transactional
-    public DeleteClientResponse deleteClient(String email, UUID clientId) {
+    public DeleteResponse deleteClient(String email, UUID clientId) {
         User user = userService.getByEmail(email);
         Client client = clientRepository.findByIdAndUser(clientId, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
@@ -103,10 +103,10 @@ public class ClientService {
         if (hasDocs) {
             client.setActive(false);
             clientRepository.save(client);
-            return new DeleteClientResponse(DeleteClientResponse.Mode.ARCHIVED);
+            return new DeleteResponse(DeleteResponse.Mode.ARCHIVED);
         }
         clientRepository.delete(client);
-        return new DeleteClientResponse(DeleteClientResponse.Mode.DELETED);
+        return new DeleteResponse(DeleteResponse.Mode.DELETED);
     }
 
     private Address buildAddress(CreateClientRequest.AddressRequest req) {

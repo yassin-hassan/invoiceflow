@@ -1,11 +1,11 @@
-package com.example.invoiceflow.client.dto;
+package com.example.invoiceflow.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class DeleteClientResponse {
+public class DeleteResponse {
 
     private Mode mode;
 

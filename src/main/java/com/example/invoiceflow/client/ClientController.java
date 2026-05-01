@@ -2,8 +2,8 @@ package com.example.invoiceflow.client;
 
 import com.example.invoiceflow.client.dto.ClientResponse;
 import com.example.invoiceflow.client.dto.CreateClientRequest;
-import com.example.invoiceflow.client.dto.DeleteClientResponse;
 import com.example.invoiceflow.client.dto.UpdateClientRequest;
+import com.example.invoiceflow.common.dto.DeleteResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +58,7 @@ public class ClientController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<DeleteClientResponse> deleteClient(
+    public ResponseEntity<DeleteResponse> deleteClient(
             @AuthenticationPrincipal UserDetails principal,
             @PathVariable UUID id) {
         return ResponseEntity.ok(clientService.deleteClient(principal.getUsername(), id));

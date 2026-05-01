@@ -1,8 +1,8 @@
 package com.example.invoiceflow.client;
 
 import com.example.invoiceflow.client.dto.CreateClientRequest;
-import com.example.invoiceflow.client.dto.DeleteClientResponse;
 import com.example.invoiceflow.client.dto.UpdateClientRequest;
+import com.example.invoiceflow.common.dto.DeleteResponse;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
 import com.example.invoiceflow.invoice.InvoiceRepository;
 import com.example.invoiceflow.quote.QuoteRepository;
@@ -187,9 +187,9 @@ class ClientServiceTest {
         when(invoiceRepository.existsByClient(client)).thenReturn(true);
         when(clientRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        DeleteClientResponse res = clientService.deleteClient("user@example.com", client.getId());
+        DeleteResponse res = clientService.deleteClient("user@example.com", client.getId());
 
-        assertThat(res.getMode()).isEqualTo(DeleteClientResponse.Mode.ARCHIVED);
+        assertThat(res.getMode()).isEqualTo(DeleteResponse.Mode.ARCHIVED);
         verify(clientRepository).save(argThat(c -> !c.isActive()));
         verify(clientRepository, never()).delete(any());
     }
@@ -201,9 +201,9 @@ class ClientServiceTest {
         when(quoteRepository.existsByClient(client)).thenReturn(false);
         when(invoiceRepository.existsByClient(client)).thenReturn(false);
 
-        DeleteClientResponse res = clientService.deleteClient("user@example.com", client.getId());
+        DeleteResponse res = clientService.deleteClient("user@example.com", client.getId());
 
-        assertThat(res.getMode()).isEqualTo(DeleteClientResponse.Mode.DELETED);
+        assertThat(res.getMode()).isEqualTo(DeleteResponse.Mode.DELETED);
         verify(clientRepository).delete(client);
         verify(clientRepository, never()).save(any());
     }
