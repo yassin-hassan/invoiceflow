@@ -1,8 +1,11 @@
 package com.example.invoiceflow.product;
 
+import com.example.invoiceflow.common.dto.DeleteResponse;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
+import com.example.invoiceflow.invoice.InvoiceLineRepository;
 import com.example.invoiceflow.product.dto.CreateProductRequest;
 import com.example.invoiceflow.product.dto.UpdateProductRequest;
+import com.example.invoiceflow.quote.QuoteLineRepository;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +29,8 @@ import static org.mockito.Mockito.*;
 class ProductServiceTest {
 
     @Mock private ProductRepository productRepository;
+    @Mock private QuoteLineRepository quoteLineRepository;
+    @Mock private InvoiceLineRepository invoiceLineRepository;
     @Mock private UserService userService;
 
     @InjectMocks
@@ -185,14 +190,32 @@ class ProductServiceTest {
     // --- deleteProduct ---
 
     @Test
-    void deleteProduct_softDeletesProduct() {
+    void deleteProduct_withDocs_softDeletes() {
         when(userService.getByEmail("user@example.com")).thenReturn(user);
         when(productRepository.findByIdAndUser(product.getId(), user)).thenReturn(Optional.of(product));
+        when(quoteLineRepository.existsByProduct(product)).thenReturn(false);
+        when(invoiceLineRepository.existsByProduct(product)).thenReturn(true);
         when(productRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        productService.deleteProduct("user@example.com", product.getId());
+        DeleteResponse res = productService.deleteProduct("user@example.com", product.getId());
 
+        assertThat(res.getMode()).isEqualTo(DeleteResponse.Mode.ARCHIVED);
         verify(productRepository).save(argThat(p -> !p.isActive()));
+        verify(productRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteProduct_withoutDocs_hardDeletes() {
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(productRepository.findByIdAndUser(product.getId(), user)).thenReturn(Optional.of(product));
+        when(quoteLineRepository.existsByProduct(product)).thenReturn(false);
+        when(invoiceLineRepository.existsByProduct(product)).thenReturn(false);
+
+        DeleteResponse res = productService.deleteProduct("user@example.com", product.getId());
+
+        assertThat(res.getMode()).isEqualTo(DeleteResponse.Mode.DELETED);
+        verify(productRepository).delete(product);
+        verify(productRepository, never()).save(any());
     }
 
     @Test

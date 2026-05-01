@@ -242,7 +242,7 @@ class ProductControllerIT extends PostgresTestContainer {
     // --- DELETE /api/products/{id} ---
 
     @Test
-    void deleteProduct_existingProduct_returns204AndSoftDeletes() throws Exception {
+    void deleteProduct_unused_hardDeletes() throws Exception {
         String response = mockMvc.perform(post("/api/products")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -263,9 +263,10 @@ class ProductControllerIT extends PostgresTestContainer {
 
         mockMvc.perform(delete("/api/products/" + id)
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mode").value("DELETED"));
 
-        // soft deleted — should no longer appear in list
+        // gone from list
         mockMvc.perform(get("/api/products")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())

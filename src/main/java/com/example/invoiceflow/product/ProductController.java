@@ -1,5 +1,6 @@
 package com.example.invoiceflow.product;
 
+import com.example.invoiceflow.common.dto.DeleteResponse;
 import com.example.invoiceflow.product.dto.CreateProductRequest;
 import com.example.invoiceflow.product.dto.ProductResponse;
 import com.example.invoiceflow.product.dto.UpdateProductRequest;
@@ -57,10 +58,9 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(
+    public ResponseEntity<DeleteResponse> deleteProduct(
             @AuthenticationPrincipal UserDetails principal,
             @PathVariable UUID id) {
-        productService.deleteProduct(principal.getUsername(), id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(productService.deleteProduct(principal.getUsername(), id));
     }
 }

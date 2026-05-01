@@ -1,8 +1,11 @@
 package com.example.invoiceflow.product;
 
+import com.example.invoiceflow.common.dto.DeleteResponse;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
+import com.example.invoiceflow.invoice.InvoiceLineRepository;
 import com.example.invoiceflow.product.dto.CreateProductRequest;
 import com.example.invoiceflow.product.dto.UpdateProductRequest;
+import com.example.invoiceflow.quote.QuoteLineRepository;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,8 @@ import java.util.UUID;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final QuoteLineRepository quoteLineRepository;
+    private final InvoiceLineRepository invoiceLineRepository;
     private final UserService userService;
 
     public List<Product> getProducts(String email) {
@@ -72,14 +77,18 @@ public class ProductService {
     }
 
     @Transactional
-    public void deleteProduct(String email, UUID productId) {
+    public DeleteResponse deleteProduct(String email, UUID productId) {
         User user = userService.getByEmail(email);
         Product product = productRepository.findByIdAndUser(productId, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        // TODO: check if product is used in quotes or invoices — soft delete if so, hard delete if not
-        // For now, always soft delete
-        product.setActive(false);
-        productRepository.save(product);
+        boolean hasDocs = quoteLineRepository.existsByProduct(product) || invoiceLineRepository.existsByProduct(product);
+        if (hasDocs) {
+            product.setActive(false);
+            productRepository.save(product);
+            return new DeleteResponse(DeleteResponse.Mode.ARCHIVED);
+        }
+        productRepository.delete(product);
+        return new DeleteResponse(DeleteResponse.Mode.DELETED);
     }
 }
