@@ -34,7 +34,19 @@ export const routes: Routes = [
       },
       {
         path: 'quotes',
-        loadComponent: () => import('./features/quotes/quotes.component').then(m => m.QuotesComponent)
+        loadComponent: () => import('./features/quotes/quotes-list.component').then(m => m.QuotesListComponent)
+      },
+      {
+        path: 'quotes/new',
+        loadComponent: () => import('./features/quotes/quote-form.component').then(m => m.QuoteFormComponent)
+      },
+      {
+        path: 'quotes/:id',
+        loadComponent: () => import('./features/quotes/quote-detail.component').then(m => m.QuoteDetailComponent)
+      },
+      {
+        path: 'quotes/:id/edit',
+        loadComponent: () => import('./features/quotes/quote-form.component').then(m => m.QuoteFormComponent)
       },
       {
         path: 'invoices',
