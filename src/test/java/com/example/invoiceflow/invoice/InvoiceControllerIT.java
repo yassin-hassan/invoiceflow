@@ -112,13 +112,13 @@ class InvoiceControllerIT extends PostgresTestContainer {
     // --- POST /api/invoices ---
 
     @Test
-    void createInvoice_validRequest_returns201WithGeneratedNumber() throws Exception {
+    void createInvoice_validRequest_returns201WithNullNumber() throws Exception {
         mockMvc.perform(post("/api/invoices")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validInvoiceJson()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.number").value("FACT-2026-001"))
+                .andExpect(jsonPath("$.number").isEmpty())
                 .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andExpect(jsonPath("$.clientName").value("Acme Corp"))
                 .andExpect(jsonPath("$.lines.length()").value(1))
@@ -156,20 +156,109 @@ class InvoiceControllerIT extends PostgresTestContainer {
     }
 
     @Test
-    void createInvoice_sequentialNumbering() throws Exception {
-        mockMvc.perform(post("/api/invoices")
+    void createInvoice_sequentialNumbering_onSend() throws Exception {
+        String idA = extractId(mockMvc.perform(post("/api/invoices")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validInvoiceJson()))
                 .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString());
+
+        String idB = extractId(mockMvc.perform(post("/api/invoices")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validInvoiceJson()))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(patch("/api/invoices/" + idA + "/status")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"status\": \"SENT\" }"))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.number").value("FACT-2026-001"));
 
-        mockMvc.perform(post("/api/invoices")
+        mockMvc.perform(patch("/api/invoices/" + idB + "/status")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"status\": \"SENT\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.number").value("FACT-2026-002"));
+    }
+
+    @Test
+    void createDeleteCreate_doesNotReuseNumber() throws Exception {
+        String idA = extractId(mockMvc.perform(post("/api/invoices")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validInvoiceJson()))
-                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString());
+
+        String idB = extractId(mockMvc.perform(post("/api/invoices")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validInvoiceJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(patch("/api/invoices/" + idA + "/status")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"status\": \"SENT\" }"))
+                .andExpect(jsonPath("$.number").value("FACT-2026-001"));
+
+        mockMvc.perform(patch("/api/invoices/" + idB + "/status")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"status\": \"SENT\" }"))
                 .andExpect(jsonPath("$.number").value("FACT-2026-002"));
+
+        String idC = extractId(mockMvc.perform(post("/api/invoices")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validInvoiceJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(delete("/api/invoices/" + idC)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        String idD = extractId(mockMvc.perform(post("/api/invoices")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validInvoiceJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(patch("/api/invoices/" + idD + "/status")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"status\": \"SENT\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.number").value("FACT-2026-003"));
+    }
+
+    @Test
+    void numberAssignedOnceOnSend_notRecomputedOnLaterTransitions() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/invoices")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validInvoiceJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(patch("/api/invoices/" + id + "/status")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"status\": \"SENT\" }"))
+                .andExpect(jsonPath("$.number").value("FACT-2026-001"));
+
+        mockMvc.perform(post("/api/invoices/" + id + "/payments")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        { "amount": 1200.00, "method": "bank_transfer", "paidAt": "2026-04-20" }
+                        """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PAID"))
+                .andExpect(jsonPath("$.number").value("FACT-2026-001"));
     }
 
     // --- POST /api/quotes/{id}/convert ---
@@ -197,7 +286,8 @@ class InvoiceControllerIT extends PostgresTestContainer {
         mockMvc.perform(post("/api/quotes/" + quote.getId() + "/convert")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.number").value("FACT-2026-001"))
+                .andExpect(jsonPath("$.number").isEmpty())
+                .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andExpect(jsonPath("$.quoteId").value(quote.getId().toString()))
                 .andExpect(jsonPath("$.lines.length()").value(1))
                 .andExpect(jsonPath("$.subtotalExclVat").value(300.00))
@@ -314,7 +404,7 @@ class InvoiceControllerIT extends PostgresTestContainer {
     // --- PATCH /api/invoices/{id}/status ---
 
     @Test
-    void updateStatus_draftToSent_succeeds() throws Exception {
+    void updateStatus_draftToSent_assignsNumber() throws Exception {
         String response = mockMvc.perform(post("/api/invoices")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -331,7 +421,8 @@ class InvoiceControllerIT extends PostgresTestContainer {
                         { "status": "SENT" }
                         """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SENT"));
+                .andExpect(jsonPath("$.status").value("SENT"))
+                .andExpect(jsonPath("$.number").value("FACT-2026-001"));
     }
 
     @Test

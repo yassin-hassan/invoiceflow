@@ -94,7 +94,10 @@ function todayIso(): string {
 
             <ng-container matColumnDef="number">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Number</th>
-              <td mat-cell *matCellDef="let inv">{{ inv.number }}</td>
+              <td mat-cell *matCellDef="let inv">
+                <span *ngIf="inv.number; else draftLabel">{{ inv.number }}</span>
+                <ng-template #draftLabel><span style="color:#999; font-style:italic;">— Draft —</span></ng-template>
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="client">
@@ -166,7 +169,7 @@ export class InvoicesListComponent implements OnInit {
     }
     if (term) {
       list = list.filter(inv =>
-        inv.number.toLowerCase().includes(term) ||
+        (inv.number?.toLowerCase().includes(term) ?? false) ||
         inv.clientName.toLowerCase().includes(term)
       );
     }
@@ -200,7 +203,7 @@ export class InvoicesListComponent implements OnInit {
   }
 
   private compare(a: Invoice, b: Invoice, key: string): number {
-    if (key === 'number') return a.number.localeCompare(b.number);
+    if (key === 'number') return (a.number ?? '').localeCompare(b.number ?? '');
     if (key === 'client') return a.clientName.localeCompare(b.clientName);
     if (key === 'issueDate') return a.issueDate.localeCompare(b.issueDate);
     if (key === 'dueDate') return a.dueDate.localeCompare(b.dueDate);

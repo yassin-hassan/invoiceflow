@@ -141,7 +141,10 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
                 <table mat-table [dataSource]="d.recentInvoices" style="width:100%;">
                   <ng-container matColumnDef="number">
                     <th mat-header-cell *matHeaderCellDef>Number</th>
-                    <td mat-cell *matCellDef="let inv">{{ inv.number }}</td>
+                    <td mat-cell *matCellDef="let inv">
+                      <span *ngIf="inv.number; else recDraft">{{ inv.number }}</span>
+                      <ng-template #recDraft><span style="color:#999; font-style:italic;">— Draft —</span></ng-template>
+                    </td>
                   </ng-container>
                   <ng-container matColumnDef="client">
                     <th mat-header-cell *matHeaderCellDef>Client</th>

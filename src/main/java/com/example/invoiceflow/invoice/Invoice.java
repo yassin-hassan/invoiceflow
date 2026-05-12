@@ -36,7 +36,7 @@ public class Invoice {
     @JoinColumn(name = "quote_id")
     private Quote quote;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String number;
 
     @Enumerated(EnumType.STRING)

@@ -30,7 +30,7 @@ export interface Payment {
 
 export interface Invoice {
   id: string;
-  number: string;
+  number: string | null;
   status: InvoiceStatus;
   clientId: string;
   clientName: string;

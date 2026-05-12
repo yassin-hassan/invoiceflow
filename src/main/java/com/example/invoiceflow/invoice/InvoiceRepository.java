@@ -22,6 +22,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     @EntityGraph(attributePaths = {"client", "lines", "lines.product", "payments", "quote"})
     Optional<Invoice> findByIdAndUser(UUID id, User user);
 
-    @Query("SELECT COUNT(i) FROM Invoice i WHERE i.user = :user AND YEAR(i.issueDate) = :year")
-    long countByUserAndYear(@Param("user") User user, @Param("year") int year);
+    @Query("""
+            SELECT COALESCE(MAX(CAST(SUBSTRING(i.number, LENGTH(i.number) - 2) AS int)), 0)
+            FROM Invoice i
+            WHERE i.user = :user AND i.number LIKE :prefix
+            """)
+    int findMaxNumberSuffixByUserAndPrefix(@Param("user") User user, @Param("prefix") String prefix);
 }

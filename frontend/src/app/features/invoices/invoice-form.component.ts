@@ -353,7 +353,7 @@ export class InvoiceFormComponent implements OnInit {
     request$.subscribe({
       next: inv => {
         this.loading.set(false);
-        this.snack.open(id ? `Invoice ${inv.number} updated` : `Invoice ${inv.number} created`, 'Dismiss', { duration: 2500 });
+        this.snack.open(id ? `Invoice ${inv.number ?? '(draft)'} updated` : `Draft invoice created`, 'Dismiss', { duration: 2500 });
         this.router.navigate(['/invoices', inv.id]);
       },
       error: err => {

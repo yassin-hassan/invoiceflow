@@ -17,7 +17,7 @@ export interface DashboardCounts {
 
 export interface InvoiceSummary {
   id: string;
-  number: string;
+  number: string | null;
   clientName: string;
   status: InvoiceStatus;
   totalInclVat: number;

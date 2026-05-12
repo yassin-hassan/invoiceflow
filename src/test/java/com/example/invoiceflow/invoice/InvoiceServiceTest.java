@@ -32,6 +32,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,15 +129,14 @@ class InvoiceServiceTest {
     // --- createInvoice ---
 
     @Test
-    void createInvoice_validRequest_savesWithGeneratedNumber() {
+    void createInvoice_validRequest_savesAsDraftWithNullNumber() {
         when(userService.getByEmail("user@example.com")).thenReturn(user);
         when(clientRepository.findByIdAndUser(client.getId(), user)).thenReturn(Optional.of(client));
-        when(invoiceRepository.countByUserAndYear(eq(user), anyInt())).thenReturn(0L);
         when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Invoice result = invoiceService.createInvoice("user@example.com", buildCreateRequest());
 
-        assertThat(result.getNumber()).matches("FACT-\\d{4}-001");
+        assertThat(result.getNumber()).isNull();
         assertThat(result.getStatus()).isEqualTo(InvoiceStatus.DRAFT);
         assertThat(result.getLines()).hasSize(1);
     }
@@ -144,7 +145,6 @@ class InvoiceServiceTest {
     void createInvoice_defaultDates_issueDateTodayDuePlus30() {
         when(userService.getByEmail("user@example.com")).thenReturn(user);
         when(clientRepository.findByIdAndUser(client.getId(), user)).thenReturn(Optional.of(client));
-        when(invoiceRepository.countByUserAndYear(eq(user), anyInt())).thenReturn(0L);
         when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Invoice result = invoiceService.createInvoice("user@example.com", buildCreateRequest());
@@ -181,13 +181,14 @@ class InvoiceServiceTest {
 
         when(userService.getByEmail("user@example.com")).thenReturn(user);
         when(quoteRepository.findByIdAndUser(quote.getId(), user)).thenReturn(Optional.of(quote));
-        when(invoiceRepository.countByUserAndYear(eq(user), anyInt())).thenReturn(0L);
         when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(quoteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Invoice result = invoiceService.convertFromQuote("user@example.com", quote.getId());
 
         assertThat(result.getQuote()).isEqualTo(quote);
+        assertThat(result.getNumber()).isNull();
+        assertThat(result.getStatus()).isEqualTo(InvoiceStatus.DRAFT);
         assertThat(result.getLines()).hasSize(1);
         assertThat(result.getLines().iterator().next().getDescription()).isEqualTo("Web dev");
         assertThat(quote.getStatus()).isEqualTo(QuoteStatus.CONVERTED);
@@ -239,10 +240,13 @@ class InvoiceServiceTest {
     // --- updateStatus ---
 
     @Test
-    void updateStatus_draftToSent_succeeds() {
+    void updateStatus_draftToSent_assignsNextNumber() {
+        invoice.setNumber(null);
+        int year = invoice.getIssueDate().getYear();
         when(userService.getByEmail("user@example.com")).thenReturn(user);
         when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
-        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(7);
+        when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         UpdateInvoiceStatusRequest request = new UpdateInvoiceStatusRequest();
         request.setStatus(InvoiceStatus.SENT);
@@ -250,6 +254,25 @@ class InvoiceServiceTest {
         Invoice result = invoiceService.updateStatus("user@example.com", invoice.getId(), request);
 
         assertThat(result.getStatus()).isEqualTo(InvoiceStatus.SENT);
+        assertThat(result.getNumber()).isEqualTo(String.format("FACT-%d-008", year));
+    }
+
+    @Test
+    void updateStatus_sentToOverdue_keepsExistingNumber() {
+        invoice.setStatus(InvoiceStatus.SENT);
+        invoice.setNumber("FACT-2026-005");
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateInvoiceStatusRequest request = new UpdateInvoiceStatusRequest();
+        request.setStatus(InvoiceStatus.OVERDUE);
+
+        Invoice result = invoiceService.updateStatus("user@example.com", invoice.getId(), request);
+
+        assertThat(result.getStatus()).isEqualTo(InvoiceStatus.OVERDUE);
+        assertThat(result.getNumber()).isEqualTo("FACT-2026-005");
+        verify(invoiceRepository, never()).findMaxNumberSuffixByUserAndPrefix(any(), anyString());
     }
 
     @Test

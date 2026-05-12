@@ -1,0 +1,1 @@
+ALTER TABLE invoices ALTER COLUMN number DROP NOT NULL;

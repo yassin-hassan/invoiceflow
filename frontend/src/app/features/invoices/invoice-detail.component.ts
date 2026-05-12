@@ -49,7 +49,7 @@ function todayIso(): string {
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
           <div>
             <div style="display:flex; align-items:center; gap:12px;">
-              <h1 style="margin:0;">{{ inv.number }}</h1>
+              <h1 style="margin:0;">{{ inv.number || 'Draft invoice' }}</h1>
               <app-invoice-status-chip [status]="inv.status"></app-invoice-status-chip>
             </div>
             <div style="color:#555; margin-top:8px;">
@@ -270,7 +270,7 @@ export class InvoiceDetailComponent implements OnInit {
       return;
     }
     this.dialog.open(PaymentDialogComponent, {
-      data: { invoiceNumber: inv.number, amountDue: inv.amountDue }
+      data: { invoiceNumber: inv.number ?? '', amountDue: inv.amountDue }
     }).afterClosed().subscribe(req => {
       if (!req) return;
       this.acting.set(true);
@@ -298,7 +298,7 @@ export class InvoiceDetailComponent implements OnInit {
     this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Delete invoice',
-        message: `Delete invoice ${inv.number}? This cannot be undone.`,
+        message: `Delete ${inv.number ? 'invoice ' + inv.number : 'this draft invoice'}? This cannot be undone.`,
         confirmLabel: 'Delete',
         confirmColor: 'warn'
       }
@@ -308,7 +308,7 @@ export class InvoiceDetailComponent implements OnInit {
       this.invoices.remove(inv.id).subscribe({
         next: () => {
           this.acting.set(false);
-          this.snack.open(`Invoice ${inv.number} deleted.`, 'Dismiss', { duration: 2500 });
+          this.snack.open(`${inv.number ? 'Invoice ' + inv.number : 'Draft invoice'} deleted.`, 'Dismiss', { duration: 2500 });
           this.router.navigate(['/invoices']);
         },
         error: err => {

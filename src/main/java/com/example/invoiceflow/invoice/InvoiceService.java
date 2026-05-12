@@ -59,7 +59,6 @@ public class InvoiceService {
         Invoice invoice = new Invoice();
         invoice.setUser(user);
         invoice.setClient(client);
-        invoice.setNumber(generateInvoiceNumber(user, issueDate));
         invoice.setIssueDate(issueDate);
         invoice.setDueDate(dueDate);
         invoice.setPaymentTerms(request.getPaymentTerms());
@@ -87,7 +86,6 @@ public class InvoiceService {
         invoice.setUser(user);
         invoice.setClient(quote.getClient());
         invoice.setQuote(quote);
-        invoice.setNumber(generateInvoiceNumber(user, issueDate));
         invoice.setIssueDate(issueDate);
         invoice.setDueDate(dueDate);
 
@@ -146,8 +144,12 @@ public class InvoiceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
 
         validateTransition(invoice.getStatus(), request.getStatus());
-        invoice.setStatus(request.getStatus());
 
+        if (request.getStatus() == InvoiceStatus.SENT && invoice.getNumber() == null) {
+            return assignNumberAndStatus(invoice, InvoiceStatus.SENT);
+        }
+
+        invoice.setStatus(request.getStatus());
         return invoiceRepository.save(invoice);
     }
 
@@ -241,9 +243,12 @@ public class InvoiceService {
         }
     }
 
-    private String generateInvoiceNumber(User user, LocalDate issueDate) {
-        int year = issueDate.getYear();
-        long count = invoiceRepository.countByUserAndYear(user, year);
-        return String.format("FACT-%d-%03d", year, count + 1);
+    private Invoice assignNumberAndStatus(Invoice invoice, InvoiceStatus newStatus) {
+        int year = invoice.getIssueDate().getYear();
+        String prefix = String.format("FACT-%d-%%", year);
+        int maxSuffix = invoiceRepository.findMaxNumberSuffixByUserAndPrefix(invoice.getUser(), prefix);
+        invoice.setNumber(String.format("FACT-%d-%03d", year, maxSuffix + 1));
+        invoice.setStatus(newStatus);
+        return invoiceRepository.saveAndFlush(invoice);
     }
 }
