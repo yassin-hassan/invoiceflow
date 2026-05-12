@@ -225,17 +225,9 @@ export class QuoteDetailComponent implements OnInit {
       this.quotes.convert(q.id).subscribe({
         next: invoice => {
           this.convertedInvoice.set(invoice);
-          this.quotes.get(q.id).subscribe({
-            next: refreshed => {
-              this.acting.set(false);
-              this.quote.set(refreshed);
-              this.snack.open(`Invoice ${invoice.number} created.`, 'Dismiss', { duration: 3000 });
-            },
-            error: () => {
-              this.acting.set(false);
-              this.snack.open(`Invoice ${invoice.number} created.`, 'Dismiss', { duration: 3000 });
-            }
-          });
+          this.acting.set(false);
+          this.snack.open(`Invoice ${invoice.number} created.`, 'Dismiss', { duration: 3000 });
+          this.router.navigate(['/invoices', invoice.id]);
         },
         error: err => {
           this.acting.set(false);

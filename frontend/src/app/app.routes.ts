@@ -50,7 +50,19 @@ export const routes: Routes = [
       },
       {
         path: 'invoices',
-        loadComponent: () => import('./features/invoices/invoices.component').then(m => m.InvoicesComponent)
+        loadComponent: () => import('./features/invoices/invoices-list.component').then(m => m.InvoicesListComponent)
+      },
+      {
+        path: 'invoices/new',
+        loadComponent: () => import('./features/invoices/invoice-form.component').then(m => m.InvoiceFormComponent)
+      },
+      {
+        path: 'invoices/:id',
+        loadComponent: () => import('./features/invoices/invoice-detail.component').then(m => m.InvoiceDetailComponent)
+      },
+      {
+        path: 'invoices/:id/edit',
+        loadComponent: () => import('./features/invoices/invoice-form.component').then(m => m.InvoiceFormComponent)
       }
     ]
   },
