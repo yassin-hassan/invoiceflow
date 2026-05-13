@@ -5,8 +5,11 @@ import com.example.invoiceflow.invoice.dto.InvoiceResponse;
 import com.example.invoiceflow.invoice.dto.RecordPaymentRequest;
 import com.example.invoiceflow.invoice.dto.UpdateInvoiceRequest;
 import com.example.invoiceflow.invoice.dto.UpdateInvoiceStatusRequest;
+import com.example.invoiceflow.pdf.InvoicePdfService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +24,7 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
     private final InvoiceMapper invoiceMapper;
+    private final InvoicePdfService invoicePdfService;
 
     @GetMapping("/api/invoices")
     public ResponseEntity<List<InvoiceResponse>> getInvoices(
@@ -80,6 +84,17 @@ public class InvoiceController {
             @PathVariable UUID id) {
         invoiceService.deleteInvoice(principal.getUsername(), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/invoices/{id}/pdf")
+    public ResponseEntity<byte[]> downloadPdf(
+            @AuthenticationPrincipal UserDetails principal,
+            @PathVariable UUID id) {
+        InvoicePdfService.RenderedPdf rendered = invoicePdfService.generateForUser(principal.getUsername(), id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + rendered.filename() + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(rendered.bytes());
     }
 
     @PostMapping("/api/invoices/{id}/payments")

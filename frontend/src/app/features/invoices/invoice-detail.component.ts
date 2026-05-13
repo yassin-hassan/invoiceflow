@@ -69,6 +69,9 @@ function todayIso(): string {
             </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button mat-stroked-button (click)="downloadPdf()" [disabled]="acting()">
+              <mat-icon>picture_as_pdf</mat-icon> PDF
+            </button>
             <ng-container [ngSwitch]="inv.status">
               <ng-container *ngSwitchCase="'DRAFT'">
                 <button mat-raised-button color="primary" (click)="edit()" [disabled]="acting()">
@@ -259,6 +262,27 @@ export class InvoiceDetailComponent implements OnInit {
       confirmLabel: 'Mark overdue',
       confirmColor: 'primary',
       successMessage: 'Invoice marked as overdue.'
+    });
+  }
+
+  downloadPdf(): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.acting.set(true);
+    this.invoices.downloadPdf(inv.id).subscribe({
+      next: blob => {
+        this.acting.set(false);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (inv.number ?? `brouillon-${inv.id}`) + '.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.acting.set(false);
+        this.snack.open('Could not download PDF.', 'Dismiss', { duration: 3000 });
+      }
     });
   }
 

@@ -55,4 +55,8 @@ export class InvoicesService {
   recordPayment(id: string, req: RecordPaymentRequest) {
     return this.http.post<Invoice>(`${API}/${id}/payments`, req);
   }
+
+  downloadPdf(id: string) {
+    return this.http.get(`${API}/${id}/pdf`, { responseType: 'blob' });
+  }
 }

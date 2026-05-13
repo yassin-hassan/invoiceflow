@@ -25,6 +25,8 @@ import java.util.ArrayList;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -578,5 +580,54 @@ class InvoiceControllerIT extends PostgresTestContainer {
                         }
                         """))
                 .andExpect(status().isConflict());
+    }
+
+    // --- GET /api/invoices/{id}/pdf ---
+
+    @Test
+    void downloadPdf_existingInvoice_returnsPdf() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/invoices")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validInvoiceJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        byte[] body = mockMvc.perform(get("/api/invoices/" + id + "/pdf")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".pdf")))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        org.assertj.core.api.Assertions.assertThat(body).isNotEmpty();
+        org.assertj.core.api.Assertions.assertThat(new String(body, 0, 5)).isEqualTo("%PDF-");
+    }
+
+    @Test
+    void downloadPdf_unauthenticated_returns403() throws Exception {
+        mockMvc.perform(get("/api/invoices/00000000-0000-0000-0000-000000000000/pdf"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void downloadPdf_otherUsersInvoice_returns404() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/invoices")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validInvoiceJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        User other = new User();
+        other.setEmail("jane@example.com");
+        other.setPasswordHash(passwordEncoder.encode("Password1"));
+        other.setFirstName("Jane");
+        other.setLastName("Roe");
+        other.setEmailVerified(true);
+        userRepository.save(other);
+        String otherToken = jwtService.generateToken("jane@example.com");
+
+        mockMvc.perform(get("/api/invoices/" + id + "/pdf")
+                .header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isNotFound());
     }
 }
