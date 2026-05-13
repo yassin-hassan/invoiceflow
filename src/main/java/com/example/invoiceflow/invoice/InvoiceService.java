@@ -1,5 +1,6 @@
 package com.example.invoiceflow.invoice;
 
+import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.client.ClientRepository;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
@@ -8,6 +9,7 @@ import com.example.invoiceflow.invoice.dto.InvoiceLineRequest;
 import com.example.invoiceflow.invoice.dto.RecordPaymentRequest;
 import com.example.invoiceflow.invoice.dto.UpdateInvoiceRequest;
 import com.example.invoiceflow.invoice.dto.UpdateInvoiceStatusRequest;
+import com.example.invoiceflow.pdf.InvoicePdfService;
 import com.example.invoiceflow.product.Product;
 import com.example.invoiceflow.product.ProductRepository;
 import com.example.invoiceflow.quote.Quote;
@@ -16,11 +18,13 @@ import com.example.invoiceflow.quote.QuoteStatus;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +38,9 @@ public class InvoiceService {
     private final QuoteRepository quoteRepository;
     private final PaymentRepository paymentRepository;
     private final UserService userService;
+    private final EmailService emailService;
+    @Lazy
+    private final InvoicePdfService invoicePdfService;
 
     public List<Invoice> getInvoices(String email) {
         User user = userService.getByEmail(email);
@@ -151,6 +158,76 @@ public class InvoiceService {
 
         invoice.setStatus(request.getStatus());
         return invoiceRepository.save(invoice);
+    }
+
+    @Transactional
+    public Invoice sendInvoice(String email, UUID invoiceId) {
+        User user = userService.getByEmail(email);
+        Invoice invoice = invoiceRepository.findByIdAndUser(invoiceId, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+
+        if (invoice.getStatus() != InvoiceStatus.DRAFT) {
+            throw new IllegalStateException("Only DRAFT invoices can be sent");
+        }
+        String recipient = invoice.getClient().getEmail();
+        if (recipient == null || recipient.isBlank()) {
+            throw new IllegalStateException("Client has no email address");
+        }
+
+        Invoice issued = assignNumberAndStatus(invoice, InvoiceStatus.SENT);
+        issued.setSentAt(LocalDateTime.now());
+
+        byte[] pdf = invoicePdfService.generate(issued);
+        String filename = issued.getNumber() + ".pdf";
+        String subject = buildInvoiceSubject(issued, user);
+        String body = buildInvoiceBody(issued, user);
+        emailService.sendInvoice(recipient, subject, body, filename, pdf);
+
+        return invoiceRepository.save(issued);
+    }
+
+    private String buildInvoiceSubject(Invoice invoice, User user) {
+        String sender = (user.getCompanyName() != null && !user.getCompanyName().isBlank())
+                ? user.getCompanyName()
+                : (user.getFirstName() + " " + user.getLastName()).trim();
+        return "Facture " + invoice.getNumber() + " — " + sender;
+    }
+
+    private String buildInvoiceBody(Invoice invoice, User user) {
+        String sender = (user.getCompanyName() != null && !user.getCompanyName().isBlank())
+                ? user.getCompanyName()
+                : (user.getFirstName() + " " + user.getLastName()).trim();
+        String clientName = invoice.getClient().getName();
+        String number = invoice.getNumber();
+        String dueDate = invoice.getDueDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+        BigDecimal totalInclVat = invoice.getLines().stream()
+                .map(l -> l.getQuantity().multiply(l.getUnitPrice())
+                        .multiply(BigDecimal.ONE.add(l.getVatRate().divide(BigDecimal.valueOf(100)))))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        String totalStr = String.format(java.util.Locale.of("fr", "BE"), "%,.2f €", totalInclVat);
+
+        StringBuilder html = new StringBuilder();
+        html.append("<p>Bonjour ").append(escapeHtml(clientName)).append(",</p>");
+        html.append("<p>Veuillez trouver ci-joint la facture <strong>").append(escapeHtml(number))
+                .append("</strong> d'un montant de <strong>").append(totalStr)
+                .append("</strong> TVAC, à régler avant le <strong>").append(dueDate).append("</strong>.</p>");
+        if (invoice.getPaymentTerms() != null && !invoice.getPaymentTerms().isBlank()) {
+            html.append("<p>").append(escapeHtml(invoice.getPaymentTerms())).append("</p>");
+        }
+        html.append("<p>N'hésitez pas à me contacter pour toute question.</p>");
+        html.append("<p>Cordialement,<br>").append(escapeHtml(sender)).append("</p>");
+        return html.toString();
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     @Transactional

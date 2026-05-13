@@ -19,11 +19,13 @@ public class InvoiceMapper {
         response.setStatus(invoice.getStatus());
         response.setClientId(invoice.getClient().getId());
         response.setClientName(invoice.getClient().getName());
+        response.setClientEmail(invoice.getClient().getEmail());
         response.setQuoteId(invoice.getQuote() != null ? invoice.getQuote().getId() : null);
         response.setIssueDate(invoice.getIssueDate());
         response.setDueDate(invoice.getDueDate());
         response.setPaymentTerms(invoice.getPaymentTerms());
         response.setCreatedAt(invoice.getCreatedAt());
+        response.setSentAt(invoice.getSentAt());
 
         List<InvoiceLineResponse> lineResponses = invoice.getLines().stream()
                 .sorted(java.util.Comparator.comparingInt(InvoiceLine::getSortOrder))

@@ -48,6 +48,10 @@ export class InvoicesService {
     return this.http.patch<Invoice>(`${API}/${id}/status`, { status });
   }
 
+  send(id: string) {
+    return this.http.post<Invoice>(`${API}/${id}/send`, {});
+  }
+
   remove(id: string) {
     return this.http.delete<void>(`${API}/${id}`);
   }

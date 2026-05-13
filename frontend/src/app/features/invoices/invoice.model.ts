@@ -34,11 +34,13 @@ export interface Invoice {
   status: InvoiceStatus;
   clientId: string;
   clientName: string;
+  clientEmail: string;
   quoteId?: string;
   issueDate: string;
   dueDate: string;
   paymentTerms?: string;
   createdAt: string;
+  sentAt: string | null;
   lines: InvoiceLine[];
   payments: Payment[];
   subtotalExclVat: number;

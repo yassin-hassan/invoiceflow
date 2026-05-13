@@ -57,6 +57,10 @@ function todayIso(): string {
               <strong>Issue:</strong> {{ inv.issueDate | date:'mediumDate' }} &nbsp;·&nbsp;
               <strong>Due:</strong> {{ inv.dueDate | date:'mediumDate' }}
             </div>
+            <div *ngIf="inv.sentAt" style="color:#555; margin-top:4px;">
+              <strong>Sent:</strong> {{ inv.sentAt | date:'medium' }} &nbsp;·&nbsp;
+              <span style="color:#666;">to {{ inv.clientEmail }}</span>
+            </div>
             <div *ngIf="inv.paymentTerms" style="color:#666; margin-top:4px; font-style:italic;">
               {{ inv.paymentTerms }}
             </div>
@@ -244,13 +248,33 @@ export class InvoiceDetailComponent implements OnInit {
   }
 
   send(): void {
-    this.confirmAndTransition({
-      next: 'SENT',
-      title: 'Send invoice',
-      message: 'Once sent, the invoice becomes read-only. You won\'t be able to edit lines, dates, or terms — only cancel it via this app, or issue a credit note (coming later).',
-      confirmLabel: 'Send',
-      confirmColor: 'primary',
-      successMessage: 'Invoice marked as sent.'
+    const inv = this.invoice();
+    if (!inv) return;
+    if (!inv.clientEmail || !inv.clientEmail.trim()) {
+      this.snack.open('This client has no email address.', 'Dismiss', { duration: 4000 });
+      return;
+    }
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Send invoice',
+        message: `Send this invoice by email to ${inv.clientEmail}? A sequential invoice number will be assigned now, and the invoice becomes read-only afterwards.`,
+        confirmLabel: 'Send',
+        confirmColor: 'primary'
+      }
+    }).afterClosed().subscribe(ok => {
+      if (!ok) return;
+      this.acting.set(true);
+      this.invoices.send(inv.id).subscribe({
+        next: updated => {
+          this.acting.set(false);
+          this.invoice.set(updated);
+          this.snack.open(`Invoice ${updated.number} sent to ${updated.clientEmail}.`, 'Dismiss', { duration: 3500 });
+        },
+        error: err => {
+          this.acting.set(false);
+          this.snack.open(extractErrorDetail(err, 'Could not send invoice.'), 'Dismiss', { duration: 4000 });
+        }
+      });
     });
   }
 

@@ -17,11 +17,13 @@ public class InvoiceResponse {
     private InvoiceStatus status;
     private UUID clientId;
     private String clientName;
+    private String clientEmail;
     private UUID quoteId;
     private LocalDate issueDate;
     private LocalDate dueDate;
     private String paymentTerms;
     private LocalDateTime createdAt;
+    private LocalDateTime sentAt;
     private List<InvoiceLineResponse> lines;
     private List<PaymentResponse> payments;
     private BigDecimal subtotalExclVat;

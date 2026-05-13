@@ -78,6 +78,14 @@ public class InvoiceController {
         return ResponseEntity.ok(invoiceMapper.toResponse(updated));
     }
 
+    @PostMapping("/api/invoices/{id}/send")
+    public ResponseEntity<InvoiceResponse> sendInvoice(
+            @AuthenticationPrincipal UserDetails principal,
+            @PathVariable UUID id) {
+        Invoice sent = invoiceService.sendInvoice(principal.getUsername(), id);
+        return ResponseEntity.ok(invoiceMapper.toResponse(sent));
+    }
+
     @DeleteMapping("/api/invoices/{id}")
     public ResponseEntity<Void> deleteInvoice(
             @AuthenticationPrincipal UserDetails principal,

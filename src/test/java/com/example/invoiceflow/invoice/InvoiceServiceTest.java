@@ -1,5 +1,6 @@
 package com.example.invoiceflow.invoice;
 
+import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.client.ClientRepository;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
@@ -8,6 +9,7 @@ import com.example.invoiceflow.invoice.dto.InvoiceLineRequest;
 import com.example.invoiceflow.invoice.dto.RecordPaymentRequest;
 import com.example.invoiceflow.invoice.dto.UpdateInvoiceRequest;
 import com.example.invoiceflow.invoice.dto.UpdateInvoiceStatusRequest;
+import com.example.invoiceflow.pdf.InvoicePdfService;
 import com.example.invoiceflow.product.ProductRepository;
 import com.example.invoiceflow.quote.Quote;
 import com.example.invoiceflow.quote.QuoteLine;
@@ -45,6 +47,8 @@ class InvoiceServiceTest {
     @Mock private QuoteRepository quoteRepository;
     @Mock private PaymentRepository paymentRepository;
     @Mock private UserService userService;
+    @Mock private EmailService emailService;
+    @Mock private InvoicePdfService invoicePdfService;
 
     @InjectMocks
     private InvoiceService invoiceService;
@@ -379,6 +383,87 @@ class InvoiceServiceTest {
 
         assertThatThrownBy(() -> invoiceService.recordPayment("user@example.com", invoice.getId(), request))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // --- sendInvoice ---
+
+    @Test
+    void sendInvoice_draftInvoice_assignsNumberAndCallsEmail() {
+        invoice.setNumber(null);
+        invoice.setStatus(InvoiceStatus.DRAFT);
+        client.setEmail("acme@example.com");
+        user.setFirstName("Jean");
+        user.setLastName("Dupont");
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
+        when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+
+        Invoice result = invoiceService.sendInvoice("user@example.com", invoice.getId());
+
+        int year = invoice.getIssueDate().getYear();
+        assertThat(result.getNumber()).isEqualTo(String.format("FACT-%d-001", year));
+        assertThat(result.getStatus()).isEqualTo(InvoiceStatus.SENT);
+        assertThat(result.getSentAt()).isNotNull();
+        verify(emailService).sendInvoice(eq("acme@example.com"), anyString(), anyString(),
+                eq(result.getNumber() + ".pdf"), eq(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    void sendInvoice_nonDraftInvoice_throwsIllegalStateException() {
+        invoice.setStatus(InvoiceStatus.SENT);
+        invoice.setNumber("FACT-2026-001");
+        client.setEmail("acme@example.com");
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoiceService.sendInvoice("user@example.com", invoice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        verifyNoInteractions(emailService);
+        verifyNoInteractions(invoicePdfService);
+    }
+
+    @Test
+    void sendInvoice_clientWithoutEmail_throwsIllegalStateException() {
+        invoice.setNumber(null);
+        invoice.setStatus(InvoiceStatus.DRAFT);
+        client.setEmail(null);
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoiceService.sendInvoice("user@example.com", invoice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(invoiceRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(emailService);
+        verifyNoInteractions(invoicePdfService);
+    }
+
+    @Test
+    void sendInvoice_emailFails_propagatesException() {
+        invoice.setNumber(null);
+        invoice.setStatus(InvoiceStatus.DRAFT);
+        client.setEmail("acme@example.com");
+        user.setFirstName("Jean");
+        user.setLastName("Dupont");
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
+        when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+        doThrow(new IllegalStateException("smtp down")).when(emailService)
+                .sendInvoice(anyString(), anyString(), anyString(), anyString(), any());
+
+        assertThatThrownBy(() -> invoiceService.sendInvoice("user@example.com", invoice.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("smtp down");
     }
 
     @Test

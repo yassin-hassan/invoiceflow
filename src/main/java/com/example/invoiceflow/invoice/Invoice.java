@@ -55,6 +55,9 @@ public class Invoice {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "sent_at")
+    private LocalDateTime sentAt;
+
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<InvoiceLine> lines = new HashSet<>();
 
