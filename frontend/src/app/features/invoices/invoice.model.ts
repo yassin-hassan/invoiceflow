@@ -19,6 +19,22 @@ export interface InvoiceLine {
   sortOrder: number;
 }
 
+export type CreditNoteStatus = 'DRAFT' | 'ISSUED';
+
+export interface CreditNoteLineSummary {
+  invoiceLineId: string;
+  quantity: number;
+}
+
+export interface CreditNoteSummary {
+  id: string;
+  number: string | null;
+  status: CreditNoteStatus;
+  issueDate: string;
+  totalInclVat: number;
+  lines: CreditNoteLineSummary[];
+}
+
 export interface Payment {
   id: string;
   amount: number;
@@ -41,6 +57,8 @@ export interface Invoice {
   paymentTerms?: string;
   createdAt: string;
   sentAt: string | null;
+  creditNotes: CreditNoteSummary[];
+  creditNoteTotalInclVat: number | null;
   lines: InvoiceLine[];
   payments: Payment[];
   subtotalExclVat: number;

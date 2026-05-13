@@ -42,6 +42,10 @@ import { AuthService } from '../../../core/services/auth.service';
             <mat-icon matListItemIcon>receipt</mat-icon>
             <span matListItemTitle>Invoices</span>
           </a>
+          <a mat-list-item routerLink="/credit-notes" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>undo</mat-icon>
+            <span matListItemTitle>Credit notes</span>
+          </a>
         </mat-nav-list>
         <div style="position: absolute; bottom: 0; width: 100%; padding: 8px;">
           <button mat-button style="width: 100%;" (click)="auth.logout()">

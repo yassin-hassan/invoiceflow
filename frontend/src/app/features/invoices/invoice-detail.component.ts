@@ -12,6 +12,9 @@ import { Invoice, InvoiceStatus } from './invoice.model';
 import { InvoiceStatusChipComponent } from './invoice-status-chip.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PaymentDialogComponent } from './payment-dialog.component';
+import { CreditNoteFormDialogComponent } from '../credit-notes/credit-note-form-dialog.component';
+import { CreditNotesService } from '../credit-notes/credit-notes.service';
+import { CreateCreditNoteRequest } from '../credit-notes/credit-note.model';
 import { extractErrorDetail } from '../../core/utils/http-errors';
 
 function todayIso(): string {
@@ -71,6 +74,13 @@ function todayIso(): string {
                 Created from quote — open
               </a>
             </div>
+            <div *ngFor="let cn of inv.creditNotes" style="margin-top:8px;">
+              <a [routerLink]="['/credit-notes', cn.id]"
+                 style="display:inline-flex; align-items:center; gap:4px; color:#1976d2; text-decoration:none; font-size:0.9rem;">
+                <mat-icon style="font-size:16px; width:16px; height:16px;">undo</mat-icon>
+                Credit note {{ cn.number || '— draft' }} — open
+              </a>
+            </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button mat-stroked-button (click)="downloadPdf()" [disabled]="acting()">
@@ -113,6 +123,9 @@ function todayIso(): string {
                 <span style="color:#666; font-style:italic; align-self:center;">Cancelled — no actions available.</span>
               </ng-container>
             </ng-container>
+            <button *ngIf="canCreateCreditNote(inv)" mat-stroked-button (click)="createCreditNote()" [disabled]="acting()">
+              <mat-icon>undo</mat-icon> Credit note
+            </button>
           </div>
         </div>
 
@@ -164,12 +177,18 @@ function todayIso(): string {
             <dd style="margin:0; text-align:right; font-weight:600;">{{ inv.totalInclVat | number:'1.2-2' }} €</dd>
             <dt style="color:#1b5e20;">Paid</dt>
             <dd style="margin:0; text-align:right; color:#1b5e20;">{{ inv.amountPaid | number:'1.2-2' }} €</dd>
-            <dt style="font-weight:600; font-size:1.05rem;" [style.color]="inv.amountDue > 0 ? '#b71c1c' : '#1b5e20'">
-              Amount due
+            <ng-container *ngIf="inv.creditNoteTotalInclVat">
+              <dt style="color:#b71c1c;">Credit note</dt>
+              <dd style="margin:0; text-align:right; color:#b71c1c;">
+                -{{ inv.creditNoteTotalInclVat | number:'1.2-2' }} €
+              </dd>
+            </ng-container>
+            <dt style="font-weight:600; font-size:1.05rem;" [style.color]="netAmountDue(inv) > 0 ? '#b71c1c' : '#1b5e20'">
+              {{ inv.creditNoteTotalInclVat ? 'Net amount due' : 'Amount due' }}
             </dt>
             <dd style="margin:0; text-align:right; font-weight:600; font-size:1.05rem;"
-                [style.color]="inv.amountDue > 0 ? '#b71c1c' : '#1b5e20'">
-              {{ inv.amountDue | number:'1.2-2' }} €
+                [style.color]="netAmountDue(inv) > 0 ? '#b71c1c' : '#1b5e20'">
+              {{ netAmountDue(inv) | number:'1.2-2' }} €
             </dd>
           </dl>
         </div>
@@ -208,6 +227,7 @@ export class InvoiceDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private invoices = inject(InvoicesService);
+  private creditNotes = inject(CreditNotesService);
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
@@ -245,6 +265,52 @@ export class InvoiceDetailComponent implements OnInit {
 
   canMarkOverdue(inv: Invoice): boolean {
     return inv.dueDate < todayIso();
+  }
+
+  netAmountDue(inv: Invoice): number {
+    const cn = inv.creditNoteTotalInclVat ?? 0;
+    return Math.max(0, Math.round((inv.amountDue - cn) * 100) / 100);
+  }
+
+  canCreateCreditNote(inv: Invoice): boolean {
+    const eligible = inv.status === 'SENT' || inv.status === 'PARTIALLY_PAID'
+        || inv.status === 'PAID' || inv.status === 'OVERDUE';
+    if (!eligible) return false;
+    return this.hasRemainingHeadroom(inv);
+  }
+
+  private hasRemainingHeadroom(inv: Invoice): boolean {
+    const issuedByLine = new Map<string, number>();
+    for (const cn of inv.creditNotes) {
+      if (cn.status !== 'ISSUED') continue;
+      for (const cnLine of cn.lines) {
+        issuedByLine.set(cnLine.invoiceLineId,
+          (issuedByLine.get(cnLine.invoiceLineId) ?? 0) + cnLine.quantity);
+      }
+    }
+    return inv.lines.some(l => l.quantity - (issuedByLine.get(l.id) ?? 0) > 0.0001);
+  }
+
+  createCreditNote(): void {
+    const inv = this.invoice();
+    if (!inv) return;
+    this.dialog.open(CreditNoteFormDialogComponent, {
+      data: { invoice: inv }
+    }).afterClosed().subscribe((req: CreateCreditNoteRequest | undefined) => {
+      if (!req) return;
+      this.acting.set(true);
+      this.creditNotes.createForInvoice(inv.id, req).subscribe({
+        next: created => {
+          this.acting.set(false);
+          this.snack.open('Credit note draft created.', 'Dismiss', { duration: 2500 });
+          this.router.navigate(['/credit-notes', created.id]);
+        },
+        error: err => {
+          this.acting.set(false);
+          this.snack.open(extractErrorDetail(err, 'Could not create credit note.'), 'Dismiss', { duration: 4000 });
+        }
+      });
+    });
   }
 
   send(): void {
@@ -313,12 +379,13 @@ export class InvoiceDetailComponent implements OnInit {
   recordPayment(): void {
     const inv = this.invoice();
     if (!inv) return;
-    if (inv.amountDue <= 0) {
+    const net = this.netAmountDue(inv);
+    if (net <= 0) {
       this.snack.open('Nothing left to pay on this invoice.', 'Dismiss', { duration: 2500 });
       return;
     }
     this.dialog.open(PaymentDialogComponent, {
-      data: { invoiceNumber: inv.number ?? '', amountDue: inv.amountDue }
+      data: { invoiceNumber: inv.number ?? '', amountDue: net }
     }).afterClosed().subscribe(req => {
       if (!req) return;
       this.acting.set(true);
@@ -375,7 +442,7 @@ export class InvoiceDetailComponent implements OnInit {
     this.confirmAndTransition({
       next: 'CANCELLED',
       title: 'Cancel invoice',
-      message: 'Cancelling is irreversible. Use a credit note (coming later) if you need to refund a paid invoice.',
+      message: 'Cancelling is irreversible. Use a credit note if you need to refund a paid invoice.',
       confirmLabel: 'Cancel invoice',
       confirmColor: 'warn',
       successMessage: 'Invoice cancelled.'

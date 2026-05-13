@@ -24,6 +24,8 @@ public class InvoiceResponse {
     private String paymentTerms;
     private LocalDateTime createdAt;
     private LocalDateTime sentAt;
+    private List<CreditNoteSummary> creditNotes;
+    private BigDecimal creditNoteTotalInclVat;
     private List<InvoiceLineResponse> lines;
     private List<PaymentResponse> payments;
     private BigDecimal subtotalExclVat;

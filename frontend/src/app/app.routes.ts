@@ -63,6 +63,14 @@ export const routes: Routes = [
       {
         path: 'invoices/:id/edit',
         loadComponent: () => import('./features/invoices/invoice-form.component').then(m => m.InvoiceFormComponent)
+      },
+      {
+        path: 'credit-notes',
+        loadComponent: () => import('./features/credit-notes/credit-notes-list.component').then(m => m.CreditNotesListComponent)
+      },
+      {
+        path: 'credit-notes/:id',
+        loadComponent: () => import('./features/credit-notes/credit-note-detail.component').then(m => m.CreditNoteDetailComponent)
       }
     ]
   },
