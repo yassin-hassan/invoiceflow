@@ -15,12 +15,19 @@ import com.example.invoiceflow.product.ProductRepository;
 import com.example.invoiceflow.quote.Quote;
 import com.example.invoiceflow.quote.QuoteRepository;
 import com.example.invoiceflow.quote.QuoteStatus;
+import com.example.invoiceflow.stripe.StripeService;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentLink;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.RoundingMode;
+import java.util.Map;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +37,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
@@ -39,6 +47,7 @@ public class InvoiceService {
     private final PaymentRepository paymentRepository;
     private final UserService userService;
     private final EmailService emailService;
+    private final StripeService stripeService;
     @Lazy
     private final InvoicePdfService invoicePdfService;
 
@@ -177,6 +186,8 @@ public class InvoiceService {
         Invoice issued = assignNumberAndStatus(invoice, InvoiceStatus.SENT);
         issued.setSentAt(LocalDateTime.now());
 
+        tryAttachPaymentLink(issued, user);
+
         byte[] pdf = invoicePdfService.generate(issued);
         String filename = issued.getNumber() + ".pdf";
         String subject = buildInvoiceSubject(issued, user);
@@ -184,6 +195,37 @@ public class InvoiceService {
         emailService.sendInvoice(recipient, subject, body, filename, pdf);
 
         return invoiceRepository.save(issued);
+    }
+
+    private void tryAttachPaymentLink(Invoice invoice, User user) {
+        BigDecimal netAmount = computeTotalInclVat(invoice);
+        if (netAmount.compareTo(BigDecimal.ZERO) <= 0) return;
+
+        String description = "Facture " + invoice.getNumber();
+        Map<String, String> metadata = Map.of(
+                "invoiceId", invoice.getId().toString(),
+                "userId", user.getId().toString()
+        );
+        try {
+            PaymentLink link = stripeService.createPaymentLink(netAmount, description, metadata);
+            invoice.setStripePaymentLinkId(link.getId());
+            invoice.setStripePaymentLinkUrl(link.getUrl());
+            invoice.setStripePaymentLinkCreatedAt(LocalDateTime.now());
+        } catch (StripeException | RuntimeException e) {
+            log.warn("Stripe payment link generation failed for invoice {}: {}",
+                    invoice.getId(), e.getMessage());
+        }
+    }
+
+    private BigDecimal computeTotalInclVat(Invoice invoice) {
+        return invoice.getLines().stream()
+                .map(l -> {
+                    BigDecimal excl = l.getQuantity().multiply(l.getUnitPrice());
+                    return excl.add(excl.multiply(l.getVatRate())
+                            .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     private String buildInvoiceSubject(Invoice invoice, User user) {
@@ -215,6 +257,12 @@ public class InvoiceService {
                 .append("</strong> TVAC, à régler avant le <strong>").append(dueDate).append("</strong>.</p>");
         if (invoice.getPaymentTerms() != null && !invoice.getPaymentTerms().isBlank()) {
             html.append("<p>").append(escapeHtml(invoice.getPaymentTerms())).append("</p>");
+        }
+        if (invoice.getStripePaymentLinkUrl() != null) {
+            html.append("<p style=\"margin-top:24px;\"><strong>Payer en ligne</strong><br>")
+                    .append("<a href=\"").append(escapeHtml(invoice.getStripePaymentLinkUrl()))
+                    .append("\">Régler cette facture — ").append(totalStr).append("</a><br>")
+                    .append("<span style=\"color:#666; font-size:0.9em;\">Bancontact, virement SEPA ou carte bancaire — paiement instantané.</span></p>");
         }
         html.append("<p>N'hésitez pas à me contacter pour toute question.</p>");
         html.append("<p>Cordialement,<br>").append(escapeHtml(sender)).append("</p>");
@@ -309,10 +357,9 @@ public class InvoiceService {
     private void validateTransition(InvoiceStatus current, InvoiceStatus next) {
         boolean valid = switch (current) {
             case DRAFT -> next == InvoiceStatus.SENT;
-            case SENT -> next == InvoiceStatus.OVERDUE || next == InvoiceStatus.CANCELLED;
-            case OVERDUE -> next == InvoiceStatus.CANCELLED;
-            case PARTIALLY_PAID -> next == InvoiceStatus.OVERDUE || next == InvoiceStatus.CANCELLED;
-            case PAID, CANCELLED -> false;
+            case SENT -> next == InvoiceStatus.OVERDUE;
+            case PARTIALLY_PAID -> next == InvoiceStatus.OVERDUE;
+            case OVERDUE, PAID, CANCELLED -> false;
         };
 
         if (!valid) {

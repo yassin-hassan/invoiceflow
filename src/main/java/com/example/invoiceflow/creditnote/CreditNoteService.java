@@ -9,9 +9,12 @@ import com.example.invoiceflow.invoice.InvoiceLine;
 import com.example.invoiceflow.invoice.InvoiceLineRepository;
 import com.example.invoiceflow.invoice.InvoiceRepository;
 import com.example.invoiceflow.invoice.InvoiceStatus;
+import com.example.invoiceflow.stripe.StripeService;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
+import com.stripe.exception.StripeException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CreditNoteService {
 
     private static final List<InvoiceStatus> ELIGIBLE_INVOICE_STATUSES = List.of(
@@ -39,6 +43,7 @@ public class CreditNoteService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceLineRepository invoiceLineRepository;
     private final UserService userService;
+    private final StripeService stripeService;
 
     public List<CreditNote> list(String email) {
         User user = userService.getByEmail(email);
@@ -102,14 +107,33 @@ public class CreditNoteService {
         if (creditNote.getStatus() != CreditNoteStatus.DRAFT) {
             throw new IllegalStateException("Only DRAFT credit notes can be issued");
         }
-        validateCaps(creditNote, creditNote.getOriginalInvoice(), issuedOthers(creditNote.getOriginalInvoice()));
+        Invoice invoice = creditNote.getOriginalInvoice();
+        validateCaps(creditNote, invoice, issuedOthers(invoice));
         int year = creditNote.getIssueDate().getYear();
         String prefix = String.format("AV-%d-%%", year);
         int maxSuffix = creditNoteRepository.findMaxNumberSuffixByUserAndPrefix(creditNote.getUser(), prefix);
         creditNote.setNumber(String.format("AV-%d-%03d", year, maxSuffix + 1));
         creditNote.setStatus(CreditNoteStatus.ISSUED);
         creditNote.setIssuedAt(LocalDateTime.now());
+
+        invalidateStripePaymentLink(invoice);
+
         return creditNoteRepository.saveAndFlush(creditNote);
+    }
+
+    private void invalidateStripePaymentLink(Invoice invoice) {
+        String linkId = invoice.getStripePaymentLinkId();
+        if (linkId == null) return;
+        try {
+            stripeService.deactivatePaymentLink(linkId);
+        } catch (StripeException | RuntimeException e) {
+            log.warn("Failed to deactivate Stripe payment link {} for invoice {}: {}",
+                    linkId, invoice.getId(), e.getMessage());
+        }
+        invoice.setStripePaymentLinkId(null);
+        invoice.setStripePaymentLinkUrl(null);
+        invoice.setStripePaymentLinkCreatedAt(null);
+        invoiceRepository.save(invoice);
     }
 
     private void buildLines(CreditNote creditNote, Invoice invoice, List<CreditNoteLineRequest> lineRequests) {

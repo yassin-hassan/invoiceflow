@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { InvoicesService } from './invoices.service';
 import { Invoice, InvoiceStatus } from './invoice.model';
 import { InvoiceStatusChipComponent } from './invoice-status-chip.component';
@@ -27,7 +28,7 @@ function todayIso(): string {
   imports: [
     CommonModule, DatePipe, DecimalPipe, RouterLink,
     MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule,
-    MatDialogModule, InvoiceStatusChipComponent
+    MatDialogModule, MatTooltipModule, InvoiceStatusChipComponent
   ],
   template: `
     <div style="padding:24px;">
@@ -81,6 +82,20 @@ function todayIso(): string {
                 Credit note {{ cn.number || '— draft' }} — open
               </a>
             </div>
+            <div *ngIf="showActivePaymentLinkBadge(inv)"
+                 style="margin-top:12px; display:inline-flex; align-items:center; gap:8px; padding:6px 10px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:16px; font-size:0.9rem;">
+              <mat-icon style="font-size:18px; width:18px; height:18px; color:#2e7d32;">link</mat-icon>
+              <a [href]="inv.stripePaymentLinkUrl" target="_blank" rel="noopener"
+                 style="color:#2e7d32; text-decoration:none; font-weight:500;">
+                Lien de paiement Stripe actif
+              </a>
+              <button mat-icon-button
+                      (click)="copyPaymentLink(inv.stripePaymentLinkUrl)"
+                      matTooltip="Copier le lien"
+                      style="width:24px; height:24px; line-height:24px;">
+                <mat-icon style="font-size:16px; width:16px; height:16px;">content_copy</mat-icon>
+              </button>
+            </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button mat-stroked-button (click)="downloadPdf()" [disabled]="acting()">
@@ -109,9 +124,6 @@ function todayIso(): string {
                 <button mat-raised-button color="primary" (click)="recordPayment()" [disabled]="acting()">
                   <mat-icon>payments</mat-icon> Record payment
                 </button>
-                <button mat-stroked-button color="warn" (click)="cancelInvoice()" [disabled]="acting()">
-                  <mat-icon>cancel</mat-icon> Cancel
-                </button>
               </ng-container>
 
               <ng-container *ngSwitchCase="'PAID'">
@@ -136,10 +148,16 @@ function todayIso(): string {
           <button *ngIf="canMarkOverdue(inv)" mat-stroked-button (click)="markOverdue()" [disabled]="acting()">
             <mat-icon>schedule</mat-icon> Mark overdue
           </button>
-          <button mat-stroked-button color="warn" (click)="cancelInvoice()" [disabled]="acting()">
-            <mat-icon>cancel</mat-icon> Cancel
-          </button>
         </ng-template>
+
+        <div *ngIf="showStalePaymentLinkBanner(inv)"
+             style="margin-top:16px; padding:12px 16px; background:#fff3e0; border-left:4px solid #fb8c00; border-radius:4px; display:flex; align-items:flex-start; gap:8px;">
+          <mat-icon style="color:#fb8c00;">info</mat-icon>
+          <span style="color:#5d4037;">
+            Le lien de paiement Stripe a été invalidé suite à l'émission d'une note de crédit.
+            Le montant restant dû doit être encaissé manuellement (virement, espèces, etc.) puis enregistré ici.
+          </span>
+        </div>
 
         <h3 style="margin:24px 0 8px;">Lines</h3>
         <table mat-table [dataSource]="inv.lines" style="width:100%; background:white;">
@@ -267,6 +285,25 @@ export class InvoiceDetailComponent implements OnInit {
     return inv.dueDate < todayIso();
   }
 
+  copyPaymentLink(url: string): void {
+    navigator.clipboard.writeText(url).then(
+      () => this.snack.open('Lien copié.', 'OK', { duration: 2000 }),
+      () => this.snack.open('Impossible de copier le lien.', 'OK', { duration: 2500 })
+    );
+  }
+
+  showActivePaymentLinkBadge(inv: Invoice): boolean {
+    if (!inv.stripePaymentLinkUrl) return false;
+    return inv.status === 'SENT' || inv.status === 'PARTIALLY_PAID' || inv.status === 'OVERDUE';
+  }
+
+  showStalePaymentLinkBanner(inv: Invoice): boolean {
+    const expectsPayment = inv.status === 'SENT' || inv.status === 'PARTIALLY_PAID' || inv.status === 'OVERDUE';
+    if (!expectsPayment) return false;
+    if (inv.stripePaymentLinkUrl) return false;
+    return inv.creditNotes.some(cn => cn.status === 'ISSUED');
+  }
+
   netAmountDue(inv: Invoice): number {
     const cn = inv.creditNoteTotalInclVat ?? 0;
     return Math.max(0, Math.round((inv.amountDue - cn) * 100) / 100);
@@ -323,7 +360,7 @@ export class InvoiceDetailComponent implements OnInit {
     this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Send invoice',
-        message: `Send this invoice by email to ${inv.clientEmail}? A sequential invoice number will be assigned now, and the invoice becomes read-only afterwards.`,
+        message: `Send this invoice by email to ${inv.clientEmail}? A sequential invoice number will be assigned now, and the invoice becomes read-only afterwards. A Stripe payment link will be generated and included in the email when possible.`,
         confirmLabel: 'Send',
         confirmColor: 'primary'
       }
@@ -348,7 +385,7 @@ export class InvoiceDetailComponent implements OnInit {
     this.confirmAndTransition({
       next: 'OVERDUE',
       title: 'Mark invoice overdue',
-      message: 'The due date has passed and the invoice is unpaid. Marking it overdue is informational — you can still record payments or cancel it afterwards.',
+      message: 'The due date has passed and the invoice is unpaid. Marking it overdue is informational — you can still record payments afterwards.',
       confirmLabel: 'Mark overdue',
       confirmColor: 'primary',
       successMessage: 'Invoice marked as overdue.'
@@ -435,17 +472,6 @@ export class InvoiceDetailComponent implements OnInit {
           );
         }
       });
-    });
-  }
-
-  cancelInvoice(): void {
-    this.confirmAndTransition({
-      next: 'CANCELLED',
-      title: 'Cancel invoice',
-      message: 'Cancelling is irreversible. Use a credit note if you need to refund a paid invoice.',
-      confirmLabel: 'Cancel invoice',
-      confirmColor: 'warn',
-      successMessage: 'Invoice cancelled.'
     });
   }
 

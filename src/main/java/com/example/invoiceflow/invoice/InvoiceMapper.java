@@ -37,6 +37,7 @@ public class InvoiceMapper {
         response.setPaymentTerms(invoice.getPaymentTerms());
         response.setCreatedAt(invoice.getCreatedAt());
         response.setSentAt(invoice.getSentAt());
+        response.setStripePaymentLinkUrl(invoice.getStripePaymentLinkUrl());
 
         List<CreditNote> creditNotes = creditNoteRepository.findAllByOriginalInvoiceOrderByCreatedAtAsc(invoice);
         List<CreditNoteSummary> summaries = creditNotes.stream()

@@ -58,6 +58,15 @@ public class Invoice {
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
+    @Column(name = "stripe_payment_link_id", length = 255)
+    private String stripePaymentLinkId;
+
+    @Column(name = "stripe_payment_link_url", columnDefinition = "TEXT")
+    private String stripePaymentLinkUrl;
+
+    @Column(name = "stripe_payment_link_created_at")
+    private LocalDateTime stripePaymentLinkCreatedAt;
+
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<InvoiceLine> lines = new HashSet<>();
 

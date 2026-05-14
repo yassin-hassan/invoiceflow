@@ -30,6 +30,7 @@
 		<java.version>25</java.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<aws.sdk.version>2.26.12</aws.sdk.version>
+		<stripe.version>29.1.0</stripe.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -80,6 +81,11 @@
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
 			<version>${aws.sdk.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>${stripe.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twilio.sdk</groupId>

@@ -24,6 +24,7 @@ public class InvoiceResponse {
     private String paymentTerms;
     private LocalDateTime createdAt;
     private LocalDateTime sentAt;
+    private String stripePaymentLinkUrl;
     private List<CreditNoteSummary> creditNotes;
     private BigDecimal creditNoteTotalInclVat;
     private List<InvoiceLineResponse> lines;

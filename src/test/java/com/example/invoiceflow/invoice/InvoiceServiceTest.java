@@ -15,6 +15,7 @@ import com.example.invoiceflow.quote.Quote;
 import com.example.invoiceflow.quote.QuoteLine;
 import com.example.invoiceflow.quote.QuoteRepository;
 import com.example.invoiceflow.quote.QuoteStatus;
+import com.example.invoiceflow.stripe.StripeService;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,7 @@ class InvoiceServiceTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private UserService userService;
     @Mock private EmailService emailService;
+    @Mock private StripeService stripeService;
     @Mock private InvoicePdfService invoicePdfService;
 
     @InjectMocks
@@ -410,6 +412,67 @@ class InvoiceServiceTest {
         assertThat(result.getSentAt()).isNotNull();
         verify(emailService).sendInvoice(eq("acme@example.com"), anyString(), anyString(),
                 eq(result.getNumber() + ".pdf"), eq(new byte[]{1, 2, 3}));
+    }
+
+    private void addBillableLine() {
+        InvoiceLine line = new InvoiceLine();
+        line.setInvoice(invoice);
+        line.setDescription("Web development");
+        line.setQuantity(new BigDecimal("10"));
+        line.setUnitPrice(new BigDecimal("100.00"));
+        line.setVatRate(new BigDecimal("20.00"));
+        line.setSortOrder(0);
+        invoice.getLines().add(line);
+    }
+
+    @Test
+    void sendInvoice_attachesStripePaymentLinkOnSuccess() throws Exception {
+        invoice.setNumber(null);
+        invoice.setStatus(InvoiceStatus.DRAFT);
+        client.setEmail("acme@example.com");
+        addBillableLine();
+
+        com.stripe.model.PaymentLink link = new com.stripe.model.PaymentLink();
+        link.setId("plink_test_123");
+        link.setUrl("https://buy.stripe.com/test_abc");
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
+        when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+        when(stripeService.createPaymentLink(any(), anyString(), any())).thenReturn(link);
+
+        Invoice result = invoiceService.sendInvoice("user@example.com", invoice.getId());
+
+        assertThat(result.getStripePaymentLinkId()).isEqualTo("plink_test_123");
+        assertThat(result.getStripePaymentLinkUrl()).isEqualTo("https://buy.stripe.com/test_abc");
+        assertThat(result.getStripePaymentLinkCreatedAt()).isNotNull();
+    }
+
+    @Test
+    void sendInvoice_stripeFailure_doesNotBreakSend() throws Exception {
+        invoice.setNumber(null);
+        invoice.setStatus(InvoiceStatus.DRAFT);
+        client.setEmail("acme@example.com");
+        addBillableLine();
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
+        when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
+        when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+        when(stripeService.createPaymentLink(any(), anyString(), any()))
+                .thenThrow(new RuntimeException("Stripe down"));
+
+        Invoice result = invoiceService.sendInvoice("user@example.com", invoice.getId());
+
+        assertThat(result.getStatus()).isEqualTo(InvoiceStatus.SENT);
+        assertThat(result.getStripePaymentLinkId()).isNull();
+        assertThat(result.getStripePaymentLinkUrl()).isNull();
+        verify(emailService).sendInvoice(anyString(), anyString(), anyString(), anyString(), any());
     }
 
     @Test

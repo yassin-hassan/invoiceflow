@@ -57,6 +57,7 @@ export interface Invoice {
   paymentTerms?: string;
   createdAt: string;
   sentAt: string | null;
+  stripePaymentLinkUrl: string | null;
   creditNotes: CreditNoteSummary[];
   creditNoteTotalInclVat: number | null;
   lines: InvoiceLine[];

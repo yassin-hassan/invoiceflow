@@ -10,8 +10,10 @@ import com.example.invoiceflow.invoice.InvoiceLine;
 import com.example.invoiceflow.invoice.InvoiceLineRepository;
 import com.example.invoiceflow.invoice.InvoiceRepository;
 import com.example.invoiceflow.invoice.InvoiceStatus;
+import com.example.invoiceflow.stripe.StripeService;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
+import com.stripe.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +45,7 @@ class CreditNoteServiceTest {
     @Mock private InvoiceRepository invoiceRepository;
     @Mock private InvoiceLineRepository invoiceLineRepository;
     @Mock private UserService userService;
+    @Mock private StripeService stripeService;
 
     @InjectMocks
     private CreditNoteService creditNoteService;
@@ -448,6 +451,91 @@ class CreditNoteServiceTest {
                 .hasMessageContaining("exceeds original quantity");
 
         verify(creditNoteRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void issue_deactivatesStripePaymentLinkAndClearsFields() throws Exception {
+        invoice.setStripePaymentLinkId("plink_abc");
+        invoice.setStripePaymentLinkUrl("https://buy.stripe.com/test_abc");
+        invoice.setStripePaymentLinkCreatedAt(java.time.LocalDateTime.now());
+
+        CreditNote existing = new CreditNote();
+        existing.setId(UUID.randomUUID());
+        existing.setUser(user);
+        existing.setOriginalInvoice(invoice);
+        existing.setStatus(CreditNoteStatus.DRAFT);
+        existing.setIssueDate(LocalDate.of(2026, 5, 13));
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(creditNoteRepository.findByIdAndUser(existing.getId(), user))
+                .thenReturn(Optional.of(existing));
+        when(creditNoteRepository.findAllByOriginalInvoiceAndStatusOrderByCreatedAtAsc(invoice, CreditNoteStatus.ISSUED))
+                .thenReturn(List.of());
+        when(creditNoteRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString()))
+                .thenReturn(0);
+        when(creditNoteRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        creditNoteService.issue("user@example.com", existing.getId());
+
+        verify(stripeService).deactivatePaymentLink("plink_abc");
+        verify(invoiceRepository).save(invoice);
+        assertThat(invoice.getStripePaymentLinkId()).isNull();
+        assertThat(invoice.getStripePaymentLinkUrl()).isNull();
+        assertThat(invoice.getStripePaymentLinkCreatedAt()).isNull();
+    }
+
+    @Test
+    void issue_stripeFailure_stillIssuesAndClearsFields() throws Exception {
+        invoice.setStripePaymentLinkId("plink_xyz");
+        invoice.setStripePaymentLinkUrl("https://buy.stripe.com/test_xyz");
+
+        CreditNote existing = new CreditNote();
+        existing.setId(UUID.randomUUID());
+        existing.setUser(user);
+        existing.setOriginalInvoice(invoice);
+        existing.setStatus(CreditNoteStatus.DRAFT);
+        existing.setIssueDate(LocalDate.of(2026, 5, 13));
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(creditNoteRepository.findByIdAndUser(existing.getId(), user))
+                .thenReturn(Optional.of(existing));
+        when(creditNoteRepository.findAllByOriginalInvoiceAndStatusOrderByCreatedAtAsc(invoice, CreditNoteStatus.ISSUED))
+                .thenReturn(List.of());
+        when(creditNoteRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString()))
+                .thenReturn(0);
+        when(creditNoteRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        org.mockito.Mockito.doThrow(new ApiException("stripe down", null, null, 500, null))
+                .when(stripeService).deactivatePaymentLink("plink_xyz");
+
+        CreditNote result = creditNoteService.issue("user@example.com", existing.getId());
+
+        assertThat(result.getStatus()).isEqualTo(CreditNoteStatus.ISSUED);
+        assertThat(invoice.getStripePaymentLinkId()).isNull();
+        assertThat(invoice.getStripePaymentLinkUrl()).isNull();
+    }
+
+    @Test
+    void issue_invoiceWithoutStripeLink_skipsStripeCall() {
+        CreditNote existing = new CreditNote();
+        existing.setId(UUID.randomUUID());
+        existing.setUser(user);
+        existing.setOriginalInvoice(invoice);
+        existing.setStatus(CreditNoteStatus.DRAFT);
+        existing.setIssueDate(LocalDate.of(2026, 5, 13));
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(creditNoteRepository.findByIdAndUser(existing.getId(), user))
+                .thenReturn(Optional.of(existing));
+        when(creditNoteRepository.findAllByOriginalInvoiceAndStatusOrderByCreatedAtAsc(invoice, CreditNoteStatus.ISSUED))
+                .thenReturn(List.of());
+        when(creditNoteRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString()))
+                .thenReturn(0);
+        when(creditNoteRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        creditNoteService.issue("user@example.com", existing.getId());
+
+        org.mockito.Mockito.verifyNoInteractions(stripeService);
+        verify(invoiceRepository, never()).save(any());
     }
 
     @Test
