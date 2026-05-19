@@ -61,7 +61,7 @@ public class AuthService {
             return initiate2fa(user);
         }
 
-        return LoginResponse.withToken(jwtService.generateToken(user.getEmail()));
+        return LoginResponse.withToken(jwtService.generateToken(user.getEmail(), user.getRole()));
     }
 
     @Transactional
@@ -88,7 +88,7 @@ public class AuthService {
         }
 
         twoFactorRepository.delete(verification);
-        return LoginResponse.withToken(jwtService.generateToken(user.getEmail()));
+        return LoginResponse.withToken(jwtService.generateToken(user.getEmail(), user.getRole()));
     }
 
     @Transactional

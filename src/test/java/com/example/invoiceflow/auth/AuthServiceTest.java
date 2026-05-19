@@ -79,7 +79,7 @@ class AuthServiceTest {
     void login_validCredentials_returnsToken() {
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
-        when(jwtService.generateToken("test@example.com")).thenReturn("jwt-token");
+        when(jwtService.generateToken("test@example.com", com.example.invoiceflow.user.Role.USER)).thenReturn("jwt-token");
 
         var response = authService.login(loginRequest("test@example.com", "password"));
 
@@ -137,7 +137,7 @@ class AuthServiceTest {
         user.setFailedAttempts(3);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(any())).thenReturn("jwt-token");
+        when(jwtService.generateToken(any(), any())).thenReturn("jwt-token");
 
         authService.login(loginRequest("test@example.com", "password"));
 
@@ -325,7 +325,7 @@ class AuthServiceTest {
         user.set2faEnabled(false);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashed")).thenReturn(true);
-        when(jwtService.generateToken("test@example.com")).thenReturn("jwt-token");
+        when(jwtService.generateToken("test@example.com", com.example.invoiceflow.user.Role.USER)).thenReturn("jwt-token");
 
         var response = authService.login(loginRequest("test@example.com", "password"));
 
@@ -349,7 +349,7 @@ class AuthServiceTest {
         var verification = new TwoFactorVerification(user, "123456", LocalDateTime.now().plusMinutes(5));
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
         when(twoFactorRepository.findByUserIdAndCode(user.getId(), "123456")).thenReturn(Optional.of(verification));
-        when(jwtService.generateToken("test@example.com")).thenReturn("jwt-token");
+        when(jwtService.generateToken("test@example.com", com.example.invoiceflow.user.Role.USER)).thenReturn("jwt-token");
 
         var response = authService.verifyTwoFactor(twoFactorRequest("test@example.com", "123456"));
 

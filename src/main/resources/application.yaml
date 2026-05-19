@@ -49,6 +49,8 @@ jwt:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:4200}
+  admin:
+    bootstrap-email: ${INVOICEFLOW_ADMIN_EMAIL:}
   mail:
     from: ${MAIL_FROM:noreply@invoiceflow.app}
   storage:

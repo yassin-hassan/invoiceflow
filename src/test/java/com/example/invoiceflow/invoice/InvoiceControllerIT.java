@@ -84,7 +84,7 @@ class InvoiceControllerIT extends PostgresTestContainer {
         client.setEmail("acme@example.com");
         clientRepository.save(client);
 
-        token = jwtService.generateToken("john.doe@example.com");
+        token = jwtService.generateToken("john.doe@example.com", com.example.invoiceflow.user.Role.USER);
     }
 
     private String validInvoiceJson() {
@@ -637,7 +637,7 @@ class InvoiceControllerIT extends PostgresTestContainer {
         other.setLastName("Roe");
         other.setEmailVerified(true);
         userRepository.save(other);
-        String otherToken = jwtService.generateToken("jane@example.com");
+        String otherToken = jwtService.generateToken("jane@example.com", com.example.invoiceflow.user.Role.USER);
 
         mockMvc.perform(get("/api/invoices/" + id + "/pdf")
                 .header("Authorization", "Bearer " + otherToken))
@@ -751,7 +751,7 @@ class InvoiceControllerIT extends PostgresTestContainer {
         other.setLastName("Roe");
         other.setEmailVerified(true);
         userRepository.save(other);
-        String otherToken = jwtService.generateToken("jane@example.com");
+        String otherToken = jwtService.generateToken("jane@example.com", com.example.invoiceflow.user.Role.USER);
 
         mockMvc.perform(post("/api/invoices/" + id + "/send")
                 .header("Authorization", "Bearer " + otherToken))

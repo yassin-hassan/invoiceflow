@@ -49,7 +49,7 @@ class ClientControllerIT extends PostgresTestContainer {
         user.setEmailVerified(true);
         userRepository.save(user);
 
-        token = jwtService.generateToken("john.doe@example.com");
+        token = jwtService.generateToken("john.doe@example.com", com.example.invoiceflow.user.Role.USER);
     }
 
     // --- GET /api/clients ---

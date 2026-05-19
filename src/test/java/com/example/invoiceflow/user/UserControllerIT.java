@@ -56,7 +56,7 @@ class UserControllerIT extends PostgresTestContainer {
         user.setEmailVerified(true);
         userRepository.save(user);
 
-        token = jwtService.generateToken("john.doe@example.com");
+        token = jwtService.generateToken("john.doe@example.com", com.example.invoiceflow.user.Role.USER);
     }
 
     // --- GET /api/users/me ---
@@ -69,7 +69,8 @@ class UserControllerIT extends PostgresTestContainer {
                 .andExpect(jsonPath("$.email").value("john.doe@example.com"))
                 .andExpect(jsonPath("$.firstName").value("John"))
                 .andExpect(jsonPath("$.lastName").value("Doe"))
-                .andExpect(jsonPath("$.preferredLanguage").value("FR"));
+                .andExpect(jsonPath("$.preferredLanguage").value("FR"))
+                .andExpect(jsonPath("$.role").value("USER"));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.example.invoiceflow.user.dto;
 
+import com.example.invoiceflow.user.Role;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ public class UserResponse {
     private String vatNumber;
     private String logoUrl;
     private String preferredLanguage;
+    private Role role;
     private boolean is2faEnabled;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;

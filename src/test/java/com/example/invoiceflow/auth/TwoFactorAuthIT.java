@@ -52,7 +52,7 @@ class TwoFactorAuthIT extends PostgresTestContainer {
         user.setEmailVerified(true);
         userRepository.save(user);
 
-        token = jwtService.generateToken("alice@example.com");
+        token = jwtService.generateToken("alice@example.com", com.example.invoiceflow.user.Role.USER);
     }
 
     // --- PUT /api/users/me/2fa/enable ---

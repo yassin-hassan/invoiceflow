@@ -122,7 +122,7 @@ class CreditNoteControllerIT extends PostgresTestContainer {
 
         invoiceRepository.save(sentInvoice);
 
-        token = jwtService.generateToken("john.doe@example.com");
+        token = jwtService.generateToken("john.doe@example.com", com.example.invoiceflow.user.Role.USER);
     }
 
     private String extractId(String json) throws Exception {
@@ -490,7 +490,7 @@ class CreditNoteControllerIT extends PostgresTestContainer {
         other.setLastName("Roe");
         other.setEmailVerified(true);
         userRepository.save(other);
-        String otherToken = jwtService.generateToken("jane@example.com");
+        String otherToken = jwtService.generateToken("jane@example.com", com.example.invoiceflow.user.Role.USER);
 
         mockMvc.perform(get("/api/credit-notes/" + id)
                 .header("Authorization", "Bearer " + otherToken))
@@ -537,7 +537,7 @@ class CreditNoteControllerIT extends PostgresTestContainer {
         other.setLastName("Roe");
         other.setEmailVerified(true);
         userRepository.save(other);
-        String otherToken = jwtService.generateToken("jane@example.com");
+        String otherToken = jwtService.generateToken("jane@example.com", com.example.invoiceflow.user.Role.USER);
 
         mockMvc.perform(get("/api/credit-notes/" + id + "/pdf")
                 .header("Authorization", "Bearer " + otherToken))

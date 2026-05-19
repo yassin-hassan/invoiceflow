@@ -61,7 +61,7 @@ class QuoteControllerIT extends PostgresTestContainer {
         client.setEmail("acme@example.com");
         clientRepository.save(client);
 
-        token = jwtService.generateToken("john.doe@example.com");
+        token = jwtService.generateToken("john.doe@example.com", com.example.invoiceflow.user.Role.USER);
     }
 
     private String validQuoteJson() {
