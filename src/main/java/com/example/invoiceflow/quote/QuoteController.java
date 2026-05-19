@@ -66,6 +66,14 @@ public class QuoteController {
         return ResponseEntity.ok(quoteMapper.toResponse(updated));
     }
 
+    @PostMapping("/{id}/send")
+    public ResponseEntity<QuoteResponse> sendQuote(
+            @AuthenticationPrincipal UserDetails principal,
+            @PathVariable UUID id) {
+        Quote sent = quoteService.sendQuote(principal.getUsername(), id);
+        return ResponseEntity.ok(quoteMapper.toResponse(sent));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteQuote(
             @AuthenticationPrincipal UserDetails principal,

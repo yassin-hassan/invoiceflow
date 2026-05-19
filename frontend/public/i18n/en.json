@@ -326,9 +326,10 @@
     },
     "send": {
       "title": "Send quote",
-      "message": "Once sent, the quote becomes read-only and the status changes to SENT.",
+      "message": "Send this quote by email to the client with the PDF attached? The quote becomes read-only afterwards.",
       "confirm": "Send",
-      "success": "Quote marked as sent."
+      "success": "Quote sent to the client.",
+      "failed": "Could not send quote."
     },
     "accept": {
       "title": "Mark quote accepted",
@@ -695,6 +696,7 @@
         "INVOICE_SENT": "Invoice sent",
         "INVOICE_CANCELLED": "Invoice cancelled",
         "INVOICE_PAYMENT_RECORDED": "Payment recorded",
+        "QUOTE_SENT": "Quote sent",
         "CREDIT_NOTE_ISSUED": "Credit note issued",
         "STRIPE_PAYMENT_CONFIRMED": "Stripe payment confirmed",
         "ADMIN_USER_STATUS_CHANGED": "User status changed",

@@ -1,8 +1,12 @@
 package com.example.invoiceflow.quote;
 
+import com.example.invoiceflow.audit.AuditAction;
+import com.example.invoiceflow.audit.AuditLogService;
+import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.client.ClientRepository;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
+import com.example.invoiceflow.pdf.QuotePdfService;
 import com.example.invoiceflow.product.Product;
 import com.example.invoiceflow.product.ProductRepository;
 import com.example.invoiceflow.quote.dto.CreateQuoteRequest;
@@ -17,10 +21,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +43,10 @@ class QuoteServiceTest {
     @Mock private ClientRepository clientRepository;
     @Mock private ProductRepository productRepository;
     @Mock private UserService userService;
+    @Mock private EmailService emailService;
+    @Mock private MessageSource messageSource;
+    @Mock private AuditLogService auditLogService;
+    @Mock private QuotePdfService quotePdfService;
 
     @InjectMocks
     private QuoteService quoteService;
@@ -324,5 +335,97 @@ class QuoteServiceTest {
 
         assertThatThrownBy(() -> quoteService.deleteQuote("user@example.com", UUID.randomUUID()))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // --- sendQuote ---
+
+    private void addBillableLine() {
+        QuoteLine line = new QuoteLine();
+        line.setQuote(quote);
+        line.setDescription("Web development");
+        line.setQuantity(new BigDecimal("10"));
+        line.setUnitPrice(new BigDecimal("100.00"));
+        line.setVatRate(new BigDecimal("20.00"));
+        line.setSortOrder(0);
+        quote.getLines().add(line);
+    }
+
+    @Test
+    void sendQuote_draftQuote_flipsStatusAndCallsEmail() {
+        addBillableLine();
+        user.setFirstName("Jean");
+        user.setLastName("Dupont");
+        user.setPreferredLanguage("FR");
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(quoteRepository.findByIdAndUser(quote.getId(), user)).thenReturn(Optional.of(quote));
+        when(quoteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(quotePdfService.generate(any(), any())).thenReturn(new byte[]{1, 2, 3});
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("msg");
+
+        Quote result = quoteService.sendQuote("user@example.com", quote.getId());
+
+        assertThat(result.getStatus()).isEqualTo(QuoteStatus.SENT);
+        verify(emailService).sendInvoice(eq("acme@example.com"), anyString(), anyString(),
+                eq("DEV-2026-001.pdf"), eq(new byte[]{1, 2, 3}));
+        verify(auditLogService).record(eq(AuditAction.QUOTE_SENT), eq("Quote"),
+                eq(quote.getId().toString()), any(Map.class));
+    }
+
+    @Test
+    void sendQuote_nonDraftQuote_throwsIllegalStateException() {
+        quote.setStatus(QuoteStatus.SENT);
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(quoteRepository.findByIdAndUser(quote.getId(), user)).thenReturn(Optional.of(quote));
+
+        assertThatThrownBy(() -> quoteService.sendQuote("user@example.com", quote.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        verifyNoInteractions(emailService);
+        verifyNoInteractions(quotePdfService);
+        verifyNoInteractions(auditLogService);
+    }
+
+    @Test
+    void sendQuote_clientWithoutEmail_throwsIllegalStateException() {
+        client.setEmail(null);
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(quoteRepository.findByIdAndUser(quote.getId(), user)).thenReturn(Optional.of(quote));
+
+        assertThatThrownBy(() -> quoteService.sendQuote("user@example.com", quote.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(quoteRepository, never()).save(any());
+        verifyNoInteractions(emailService);
+        verifyNoInteractions(quotePdfService);
+    }
+
+    @Test
+    void sendQuote_notFound_throwsResourceNotFoundException() {
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(quoteRepository.findByIdAndUser(any(), eq(user))).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> quoteService.sendQuote("user@example.com", UUID.randomUUID()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void sendQuote_emailFails_propagatesException() {
+        addBillableLine();
+        user.setFirstName("Jean");
+        user.setLastName("Dupont");
+
+        when(userService.getByEmail("user@example.com")).thenReturn(user);
+        when(quoteRepository.findByIdAndUser(quote.getId(), user)).thenReturn(Optional.of(quote));
+        when(quotePdfService.generate(any(), any())).thenReturn(new byte[]{1, 2, 3});
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("msg");
+        doThrow(new IllegalStateException("smtp down")).when(emailService)
+                .sendInvoice(anyString(), anyString(), anyString(), anyString(), any());
+
+        assertThatThrownBy(() -> quoteService.sendQuote("user@example.com", quote.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("smtp down");
+
+        verify(quoteRepository, never()).save(any());
     }
 }

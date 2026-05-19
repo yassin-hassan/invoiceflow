@@ -179,13 +179,34 @@ export class QuoteDetailComponent implements OnInit {
   }
 
   send(): void {
-    this.confirmAndTransition({
-      next: 'SENT',
-      titleKey: 'quotes.send.title',
-      messageKey: 'quotes.send.message',
-      confirmKey: 'quotes.send.confirm',
-      confirmColor: 'primary',
-      successKey: 'quotes.send.success'
+    const q = this.quote();
+    if (!q) return;
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.t.instant('quotes.send.title'),
+        message: this.t.instant('quotes.send.message'),
+        confirmLabel: this.t.instant('quotes.send.confirm'),
+        cancelLabel: this.t.instant('common.cancel'),
+        confirmColor: 'primary'
+      }
+    }).afterClosed().subscribe(ok => {
+      if (!ok) return;
+      this.acting.set(true);
+      this.quotes.send(q.id).subscribe({
+        next: updated => {
+          this.acting.set(false);
+          this.quote.set(updated);
+          this.snack.open(this.t.instant('quotes.send.success'), this.t.instant('common.dismiss'), { duration: 2500 });
+        },
+        error: err => {
+          this.acting.set(false);
+          this.snack.open(
+            extractErrorDetail(err, this.t.instant('quotes.send.failed')),
+            this.t.instant('common.dismiss'),
+            { duration: 4000 }
+          );
+        }
+      });
     });
   }
 

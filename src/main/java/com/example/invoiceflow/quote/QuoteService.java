@@ -1,8 +1,13 @@
 package com.example.invoiceflow.quote;
 
+import com.example.invoiceflow.audit.AuditAction;
+import com.example.invoiceflow.audit.AuditLogService;
+import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.client.ClientRepository;
+import com.example.invoiceflow.config.I18nConfig;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
+import com.example.invoiceflow.pdf.QuotePdfService;
 import com.example.invoiceflow.product.Product;
 import com.example.invoiceflow.product.ProductRepository;
 import com.example.invoiceflow.quote.dto.CreateQuoteRequest;
@@ -12,11 +17,18 @@ import com.example.invoiceflow.quote.dto.UpdateQuoteStatusRequest;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -27,6 +39,11 @@ public class QuoteService {
     private final ClientRepository clientRepository;
     private final ProductRepository productRepository;
     private final UserService userService;
+    private final EmailService emailService;
+    private final MessageSource messageSource;
+    private final AuditLogService auditLogService;
+    @Lazy
+    private final QuotePdfService quotePdfService;
 
     public List<Quote> getQuotes(String email) {
         User user = userService.getByEmail(email);
@@ -100,6 +117,81 @@ public class QuoteService {
         quote.setStatus(request.getStatus());
 
         return quoteRepository.save(quote);
+    }
+
+    @Transactional
+    public Quote sendQuote(String email, UUID quoteId) {
+        User user = userService.getByEmail(email);
+        Quote quote = quoteRepository.findByIdAndUser(quoteId, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Quote not found"));
+
+        if (quote.getStatus() != QuoteStatus.DRAFT) {
+            throw new IllegalStateException("Only DRAFT quotes can be sent");
+        }
+        String recipient = quote.getClient().getEmail();
+        if (recipient == null || recipient.isBlank()) {
+            throw new IllegalStateException("Client has no email address");
+        }
+
+        quote.setStatus(QuoteStatus.SENT);
+
+        Locale locale = I18nConfig.toLocale(user.getPreferredLanguage());
+        byte[] pdf = quotePdfService.generate(quote, locale);
+        String filename = quote.getNumber() + ".pdf";
+        String subject = buildQuoteSubject(quote, user, locale);
+        String body = buildQuoteBody(quote, user, locale);
+        emailService.sendInvoice(recipient, subject, body, filename, pdf);
+
+        Quote saved = quoteRepository.save(quote);
+        auditLogService.record(AuditAction.QUOTE_SENT, "Quote", saved.getId().toString(),
+                Map.of("number", saved.getNumber(), "clientEmail", recipient));
+        return saved;
+    }
+
+    private String buildQuoteSubject(Quote quote, User user, Locale locale) {
+        String sender = (user.getCompanyName() != null && !user.getCompanyName().isBlank())
+                ? user.getCompanyName()
+                : (user.getFirstName() + " " + user.getLastName()).trim();
+        return messageSource.getMessage("email.quote.subject",
+                new Object[]{quote.getNumber(), sender}, locale);
+    }
+
+    private String buildQuoteBody(Quote quote, User user, Locale locale) {
+        String sender = (user.getCompanyName() != null && !user.getCompanyName().isBlank())
+                ? user.getCompanyName()
+                : (user.getFirstName() + " " + user.getLastName()).trim();
+        String clientName = quote.getClient().getName();
+        String number = quote.getNumber();
+        String validUntil = quote.getExpiryDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+        BigDecimal totalInclVat = quote.getLines().stream()
+                .map(l -> l.getQuantity().multiply(l.getUnitPrice())
+                        .multiply(BigDecimal.ONE.add(l.getVatRate().divide(BigDecimal.valueOf(100)))))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+        Locale numberLocale = "en".equalsIgnoreCase(locale.getLanguage())
+                ? Locale.of("en", "IE")
+                : Locale.of("fr", "BE");
+        String totalStr = String.format(numberLocale, "%,.2f €", totalInclVat);
+
+        StringBuilder html = new StringBuilder();
+        html.append(messageSource.getMessage("email.quote.greeting",
+                new Object[]{escapeHtml(clientName)}, locale));
+        html.append(messageSource.getMessage("email.quote.intro",
+                new Object[]{escapeHtml(number), totalStr, validUntil}, locale));
+        html.append(messageSource.getMessage("email.quote.questions", null, locale));
+        html.append(messageSource.getMessage("email.quote.signature",
+                new Object[]{escapeHtml(sender)}, locale));
+        return html.toString();
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     @Transactional

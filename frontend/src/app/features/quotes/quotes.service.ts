@@ -48,6 +48,10 @@ export class QuotesService {
     return this.http.patch<Quote>(`${API}/${id}/status`, { status });
   }
 
+  send(id: string) {
+    return this.http.post<Quote>(`${API}/${id}/send`, {});
+  }
+
   remove(id: string) {
     return this.http.delete<void>(`${API}/${id}`);
   }

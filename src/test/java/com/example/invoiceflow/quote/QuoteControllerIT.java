@@ -7,15 +7,23 @@ import com.example.invoiceflow.security.JwtService;
 import com.example.invoiceflow.user.User;
 import com.example.invoiceflow.user.UserRepository;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mail.MailSendException;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.util.Properties;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -32,6 +40,8 @@ class QuoteControllerIT extends PostgresTestContainer {
     @Autowired private JwtService jwtService;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
 
+    @MockitoBean private JavaMailSender mailSender;
+
     private MockMvc mockMvc;
     private String token;
     private User user;
@@ -42,6 +52,10 @@ class QuoteControllerIT extends PostgresTestContainer {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
+
+        Session session = Session.getInstance(new Properties());
+        org.mockito.Mockito.when(mailSender.createMimeMessage())
+                .thenAnswer(inv -> new MimeMessage(session));
 
         quoteRepository.deleteAll();
         clientRepository.deleteAll();
@@ -360,6 +374,117 @@ class QuoteControllerIT extends PostgresTestContainer {
     void deleteQuote_nonExistentId_returns404() throws Exception {
         mockMvc.perform(delete("/api/quotes/00000000-0000-0000-0000-000000000000")
                 .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
+
+    // --- POST /api/quotes/{id}/send ---
+
+    @Test
+    void sendQuote_draftQuote_returns200AndSendsEmail() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/quotes")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validQuoteJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(post("/api/quotes/" + id + "/send")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SENT"))
+                .andExpect(jsonPath("$.number").value("DEV-2026-001"));
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        org.mockito.Mockito.verify(mailSender, org.mockito.Mockito.times(1)).send(captor.capture());
+        MimeMessage sent = captor.getValue();
+        org.assertj.core.api.Assertions.assertThat(sent.getAllRecipients()[0].toString())
+                .isEqualTo("acme@example.com");
+        org.assertj.core.api.Assertions.assertThat(sent.getSubject()).startsWith("Devis DEV-");
+    }
+
+    @Test
+    void sendQuote_nonDraft_returns422() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/quotes")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validQuoteJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        mockMvc.perform(post("/api/quotes/" + id + "/send")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        org.mockito.Mockito.reset(mailSender);
+        Session session = Session.getInstance(new Properties());
+        org.mockito.Mockito.when(mailSender.createMimeMessage())
+                .thenAnswer(inv -> new MimeMessage(session));
+
+        mockMvc.perform(post("/api/quotes/" + id + "/send")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnprocessableEntity());
+
+        org.mockito.Mockito.verify(mailSender, org.mockito.Mockito.never())
+                .send(org.mockito.Mockito.any(MimeMessage.class));
+    }
+
+    @Test
+    void sendQuote_clientWithoutEmail_returns422() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/quotes")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validQuoteJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        client.setEmail("   ");
+        clientRepository.save(client);
+
+        mockMvc.perform(post("/api/quotes/" + id + "/send")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnprocessableEntity());
+
+        Quote reloaded = quoteRepository.findById(java.util.UUID.fromString(id)).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(reloaded.getStatus()).isEqualTo(QuoteStatus.DRAFT);
+        org.mockito.Mockito.verify(mailSender, org.mockito.Mockito.never())
+                .send(org.mockito.Mockito.any(MimeMessage.class));
+    }
+
+    @Test
+    void sendQuote_smtpFailure_rollsBackTransaction() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/quotes")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validQuoteJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        org.mockito.Mockito.doThrow(new MailSendException("smtp down"))
+                .when(mailSender).send(org.mockito.Mockito.any(MimeMessage.class));
+
+        mockMvc.perform(post("/api/quotes/" + id + "/send")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnprocessableEntity());
+
+        Quote reloaded = quoteRepository.findById(java.util.UUID.fromString(id)).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(reloaded.getStatus()).isEqualTo(QuoteStatus.DRAFT);
+    }
+
+    @Test
+    void sendQuote_otherUsersQuote_returns404() throws Exception {
+        String id = extractId(mockMvc.perform(post("/api/quotes")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validQuoteJson()))
+                .andReturn().getResponse().getContentAsString());
+
+        User other = new User();
+        other.setEmail("jane@example.com");
+        other.setPasswordHash(passwordEncoder.encode("Password1"));
+        other.setFirstName("Jane");
+        other.setLastName("Roe");
+        other.setEmailVerified(true);
+        userRepository.save(other);
+        String otherToken = jwtService.generateToken("jane@example.com", com.example.invoiceflow.user.Role.USER);
+
+        mockMvc.perform(post("/api/quotes/" + id + "/send")
+                .header("Authorization", "Bearer " + otherToken))
                 .andExpect(status().isNotFound());
     }
 }

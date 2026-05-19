@@ -326,9 +326,10 @@
     },
     "send": {
       "title": "Envoyer le devis",
-      "message": "Une fois envoyé, le devis devient en lecture seule et son statut passe à ENVOYÉ.",
+      "message": "Envoyer ce devis par e-mail au client avec le PDF en pièce jointe ? Le devis devient en lecture seule ensuite.",
       "confirm": "Envoyer",
-      "success": "Devis marqué comme envoyé."
+      "success": "Devis envoyé au client.",
+      "failed": "Impossible d''envoyer le devis."
     },
     "accept": {
       "title": "Marquer le devis accepté",
@@ -695,6 +696,7 @@
         "INVOICE_SENT": "Facture envoyée",
         "INVOICE_CANCELLED": "Facture annulée",
         "INVOICE_PAYMENT_RECORDED": "Paiement enregistré",
+        "QUOTE_SENT": "Devis envoyé",
         "CREDIT_NOTE_ISSUED": "Note de crédit émise",
         "STRIPE_PAYMENT_CONFIRMED": "Paiement Stripe confirmé",
         "ADMIN_USER_STATUS_CHANGED": "Statut utilisateur modifié",
