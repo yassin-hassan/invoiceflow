@@ -18,4 +18,9 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
     boolean existsByIdNotAndUserAndEmailAndIsActiveTrue(UUID id, User user, String email);
 
     Optional<Client> findByUserAndEmail(User user, String email);
+
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT COUNT(c) FROM Client c WHERE c.user.id = :userId AND c.isActive = true
+            """)
+    long countByUserIdAndActive(@org.springframework.data.repository.query.Param("userId") UUID userId);
 }

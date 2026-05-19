@@ -28,4 +28,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
             WHERE i.user = :user AND i.number LIKE :prefix
             """)
     int findMaxNumberSuffixByUserAndPrefix(@Param("user") User user, @Param("prefix") String prefix);
+
+    @Query("SELECT COUNT(i) FROM Invoice i WHERE i.user.id = :userId")
+    long countByUserId(@Param("userId") UUID userId);
 }

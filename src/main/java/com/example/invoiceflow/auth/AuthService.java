@@ -182,6 +182,7 @@ public class AuthService {
     private void resetFailedAttempts(User user) {
         user.setFailedAttempts(0);
         user.setLockedUntil(null);
+        user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
     }
 }
