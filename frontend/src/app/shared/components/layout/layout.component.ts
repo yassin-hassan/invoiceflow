@@ -55,6 +55,10 @@ import { LanguageToggleComponent } from '../language-toggle/language-toggle.comp
             <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
             <span matListItemTitle>{{ 'nav.admin' | translate }}</span>
           </a>
+          <a mat-list-item routerLink="/account" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>account_circle</mat-icon>
+            <span matListItemTitle>{{ 'nav.account' | translate }}</span>
+          </a>
         </mat-nav-list>
         <div style="position: absolute; bottom: 0; width: 100%; padding: 8px;">
           <button mat-button style="width: 100%;" (click)="auth.logout()">

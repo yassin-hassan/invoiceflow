@@ -74,6 +74,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/credit-notes/credit-note-detail.component').then(m => m.CreditNoteDetailComponent)
       },
       {
+        path: 'account',
+        loadComponent: () => import('./features/account/account-settings.component').then(m => m.AccountSettingsComponent)
+      },
+      {
         path: 'admin',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/admin-layout.component').then(m => m.AdminLayoutComponent),

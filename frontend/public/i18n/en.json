@@ -26,6 +26,7 @@
     "invoices": "Invoices",
     "creditNotes": "Credit notes",
     "admin": "Administration",
+    "account": "Account",
     "logout": "Logout"
   },
   "language": {
@@ -702,8 +703,19 @@
         "ADMIN_USER_STATUS_CHANGED": "User status changed",
         "ADMIN_USER_ROLE_CHANGED": "User role changed",
         "ADMIN_USER_PASSWORD_RESET_SENT": "Password reset sent",
+        "USER_DATA_EXPORTED": "User data exported",
         "ACCOUNT_DELETED": "Account deleted"
       }
+    }
+  },
+  "account": {
+    "title": "Account",
+    "privacy": {
+      "heading": "Privacy & your data",
+      "explanation": "Under Article 20 of the GDPR (right to data portability), you can download a copy of all personal data InvoiceFlow holds about you.\n\nThe archive is a ZIP containing:\n• your profile (profile.json)\n• your clients, products, quotes, invoices and credit notes (one JSON file each)\n• payments embedded inside the invoices file\n• the audit log of actions on your account\n• the PDFs of all your sent quotes, invoices and credit notes\n\nDates are in ISO-8601 format and files are UTF-8 encoded.",
+      "download": "Download my data",
+      "downloading": "Preparing your archive…",
+      "failed": "Could not generate the export."
     }
   },
   "exports": {

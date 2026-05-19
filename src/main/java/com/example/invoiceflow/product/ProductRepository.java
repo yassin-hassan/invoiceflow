@@ -11,6 +11,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     List<Product> findByUserAndIsActiveTrue(User user);
 
+    List<Product> findByUser(User user);
+
     Optional<Product> findByIdAndUser(UUID id, User user);
 
     boolean existsByUserAndReference(User user, String reference);

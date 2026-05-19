@@ -26,6 +26,7 @@
     "invoices": "Factures",
     "creditNotes": "Notes de crédit",
     "admin": "Administration",
+    "account": "Compte",
     "logout": "Déconnexion"
   },
   "language": {
@@ -702,6 +703,7 @@
         "ADMIN_USER_STATUS_CHANGED": "Statut utilisateur modifié",
         "ADMIN_USER_ROLE_CHANGED": "Rôle utilisateur modifié",
         "ADMIN_USER_PASSWORD_RESET_SENT": "Réinit. mot de passe envoyée",
+        "USER_DATA_EXPORTED": "Données utilisateur exportées",
         "ACCOUNT_DELETED": "Compte supprimé"
       }
     }
@@ -716,6 +718,16 @@
       "status": "Statut",
       "allStatuses": "Tous",
       "confirm": "Télécharger",
+      "failed": "Impossible de générer l'export."
+    }
+  },
+  "account": {
+    "title": "Compte",
+    "privacy": {
+      "heading": "Confidentialité & vos données",
+      "explanation": "Conformément à l'article 20 du RGPD, vous pouvez télécharger à tout moment l'ensemble des données personnelles que InvoiceFlow conserve à votre sujet.\n\nL'archive .zip contient : votre profil, vos clients, vos factures (avec leurs lignes et paiements), vos devis, vos notes de crédit, votre catalogue produits, votre journal d'événements de sécurité, ainsi qu'une copie PDF de chaque document généré.\n\nLes données sont au format JSON (UTF-8, dates ISO-8601) afin d'être directement réutilisables ailleurs.",
+      "download": "Télécharger mes données",
+      "downloading": "Préparation de l'archive...",
       "failed": "Impossible de générer l'export."
     }
   }
