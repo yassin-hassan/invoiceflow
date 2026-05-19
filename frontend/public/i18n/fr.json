@@ -705,5 +705,18 @@
         "ACCOUNT_DELETED": "Compte supprimé"
       }
     }
+  },
+  "exports": {
+    "button": "Exporter Excel",
+    "dialog": {
+      "title": "Export comptable",
+      "subtitle": "Génère un fichier .xlsx (factures, paiements, clients) pour votre comptable.",
+      "from": "Du",
+      "to": "Au",
+      "status": "Statut",
+      "allStatuses": "Tous",
+      "confirm": "Télécharger",
+      "failed": "Impossible de générer l'export."
+    }
   }
 }

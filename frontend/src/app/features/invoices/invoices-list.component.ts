@@ -10,10 +10,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TranslateModule } from '@ngx-translate/core';
 import { InvoicesService } from './invoices.service';
 import { Invoice, InvoiceStatus } from './invoice.model';
 import { InvoiceStatusChipComponent } from './invoice-status-chip.component';
+import { ExportDialogComponent } from '../exports/export-dialog.component';
 
 type StatusFilter = 'ALL' | InvoiceStatus;
 
@@ -28,15 +30,20 @@ function todayIso(): string {
     CommonModule, DatePipe, DecimalPipe, FormsModule,
     MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule,
     MatButtonModule, MatButtonToggleModule, MatProgressSpinnerModule, MatIconModule,
-    InvoiceStatusChipComponent, TranslateModule
+    MatDialogModule, InvoiceStatusChipComponent, TranslateModule
   ],
   template: `
     <div style="padding:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h1 style="margin:0;">{{ 'invoices.title' | translate }}</h1>
-        <button mat-raised-button color="primary" (click)="openCreate()">
-          <mat-icon>add</mat-icon> {{ 'invoices.new' | translate }}
-        </button>
+        <div style="display:flex; gap:8px;">
+          <button mat-stroked-button (click)="openExport()">
+            <mat-icon>download</mat-icon> {{ 'exports.button' | translate }}
+          </button>
+          <button mat-raised-button color="primary" (click)="openCreate()">
+            <mat-icon>add</mat-icon> {{ 'invoices.new' | translate }}
+          </button>
+        </div>
       </div>
 
       <ng-container *ngIf="service.loading()">
@@ -154,6 +161,7 @@ function todayIso(): string {
 export class InvoicesListComponent implements OnInit {
   service = inject(InvoicesService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
   columns = ['number', 'client', 'issueDate', 'dueDate', 'status', 'totalInclVat', 'amountDue'];
 
   search = signal('');
@@ -192,6 +200,10 @@ export class InvoicesListComponent implements OnInit {
 
   openCreate(): void {
     this.router.navigate(['/invoices/new']);
+  }
+
+  openExport(): void {
+    this.dialog.open(ExportDialogComponent, { width: '480px' });
   }
 
   openDetails(invoice: Invoice): void {

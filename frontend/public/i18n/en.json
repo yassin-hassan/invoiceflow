@@ -705,5 +705,18 @@
         "ACCOUNT_DELETED": "Account deleted"
       }
     }
+  },
+  "exports": {
+    "button": "Export Excel",
+    "dialog": {
+      "title": "Accounting export",
+      "subtitle": "Generate an .xlsx (invoices, payments, clients) for your accountant.",
+      "from": "From",
+      "to": "To",
+      "status": "Status",
+      "allStatuses": "All",
+      "confirm": "Download",
+      "failed": "Could not generate the export."
+    }
   }
 }
