@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ProductsService } from './products.service';
 import { Product } from './product.model';
 import { ProductFormDialogComponent } from './product-form-dialog.component';
@@ -23,14 +24,15 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
   imports: [
     CommonModule, DatePipe, DecimalPipe, FormsModule,
     MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule,
-    MatButtonModule, MatProgressSpinnerModule, MatIconModule, MatSnackBarModule
+    MatButtonModule, MatProgressSpinnerModule, MatIconModule, MatSnackBarModule,
+    TranslateModule
   ],
   template: `
     <div style="padding:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h1 style="margin:0;">Products</h1>
+        <h1 style="margin:0;">{{ 'products.title' | translate }}</h1>
         <button mat-raised-button color="primary" (click)="openCreate()">
-          <mat-icon>add</mat-icon> New product
+          <mat-icon>add</mat-icon> {{ 'products.new' | translate }}
         </button>
       </div>
 
@@ -50,19 +52,19 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
         <ng-container *ngIf="service.products().length === 0">
           <div style="text-align:center; padding:48px; color:#777;">
             <mat-icon style="font-size:48px; width:48px; height:48px;">inventory_2</mat-icon>
-            <p style="margin-top:16px;">No products yet.</p>
+            <p style="margin-top:16px;">{{ 'products.empty' | translate }}</p>
           </div>
         </ng-container>
 
         <ng-container *ngIf="service.products().length > 0">
           <mat-form-field appearance="outline" style="width:320px; margin-bottom:8px;">
-            <mat-label>Search</mat-label>
-            <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Name or reference" />
+            <mat-label>{{ 'common.search' | translate }}</mat-label>
+            <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" [placeholder]="'products.searchPlaceholder' | translate" />
             <mat-icon matSuffix>search</mat-icon>
           </mat-form-field>
 
           <ng-container *ngIf="visible().length === 0">
-            <div style="padding:24px; color:#777;">No products match "{{ search() }}".</div>
+            <div style="padding:24px; color:#777;">{{ 'products.noMatch' | translate:{ search: search() } }}</div>
           </ng-container>
 
           <table
@@ -74,44 +76,44 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
             style="width:100%; background:white;">
 
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'products.columns.name' | translate }}</th>
               <td mat-cell *matCellDef="let p">{{ p.name }}</td>
             </ng-container>
 
             <ng-container matColumnDef="reference">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Reference</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'products.columns.reference' | translate }}</th>
               <td mat-cell *matCellDef="let p">{{ p.reference }}</td>
             </ng-container>
 
             <ng-container matColumnDef="unitPrice">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">Unit price</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">{{ 'products.columns.unitPrice' | translate }}</th>
               <td mat-cell *matCellDef="let p" style="text-align:right;">
                 {{ p.unitPrice | number:'1.2-2' }} €
               </td>
             </ng-container>
 
             <ng-container matColumnDef="vatRate">
-              <th mat-header-cell *matHeaderCellDef style="text-align:right;">VAT</th>
+              <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'products.columns.vat' | translate }}</th>
               <td mat-cell *matCellDef="let p" style="text-align:right;">{{ p.vatRate }}%</td>
             </ng-container>
 
             <ng-container matColumnDef="unit">
-              <th mat-header-cell *matHeaderCellDef>Unit</th>
-              <td mat-cell *matCellDef="let p">{{ p.unit }}</td>
+              <th mat-header-cell *matHeaderCellDef>{{ 'products.columns.unit' | translate }}</th>
+              <td mat-cell *matCellDef="let p">{{ ('products.units.' + p.unit) | translate }}</td>
             </ng-container>
 
             <ng-container matColumnDef="createdAt">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'products.columns.created' | translate }}</th>
               <td mat-cell *matCellDef="let p">{{ p.createdAt | date:'mediumDate' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef style="width:112px;"></th>
               <td mat-cell *matCellDef="let p">
-                <button mat-icon-button (click)="openEdit(p); $event.stopPropagation()" aria-label="Edit">
+                <button mat-icon-button (click)="openEdit(p); $event.stopPropagation()" [attr.aria-label]="'common.edit' | translate">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button (click)="remove(p); $event.stopPropagation()" aria-label="Delete">
+                <button mat-icon-button (click)="remove(p); $event.stopPropagation()" [attr.aria-label]="'common.delete' | translate">
                   <mat-icon>delete</mat-icon>
                 </button>
               </td>
@@ -132,6 +134,7 @@ export class ProductsComponent implements OnInit {
   service = inject(ProductsService);
   private dialog = inject(MatDialog);
   private snack = inject(MatSnackBar);
+  private t = inject(TranslateService);
   columns = ['name', 'reference', 'unitPrice', 'vatRate', 'unit', 'createdAt', 'actions'];
 
   search = signal('');
@@ -187,9 +190,10 @@ export class ProductsComponent implements OnInit {
   remove(product: Product): void {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete product?',
-        message: `If "${product.name}" is used in any quote or invoice, it'll be archived. Otherwise, it'll be deleted permanently.`,
-        confirmLabel: 'Delete',
+        title: this.t.instant('products.deleteConfirm.title'),
+        message: this.t.instant('products.deleteConfirm.message', { name: product.name }),
+        confirmLabel: this.t.instant('products.deleteConfirm.confirm'),
+        cancelLabel: this.t.instant('common.cancel'),
         confirmColor: 'warn'
       }
     });
@@ -199,14 +203,14 @@ export class ProductsComponent implements OnInit {
         next: res => {
           this.service.products.update(list => list.filter(p => p.id !== product.id));
           const msg = res.mode === 'ARCHIVED'
-            ? `${product.name} archived (used in quotes/invoices)`
-            : `${product.name} deleted`;
-          this.snack.open(msg, 'Dismiss', { duration: 3000 });
+            ? this.t.instant('products.archived', { name: product.name })
+            : this.t.instant('products.deleted', { name: product.name });
+          this.snack.open(msg, this.t.instant('common.dismiss'), { duration: 3000 });
         },
         error: err => {
           this.snack.open(
-            extractErrorDetail(err, 'Could not delete product.'),
-            'Dismiss',
+            extractErrorDetail(err, this.t.instant('products.deleteFailed')),
+            this.t.instant('common.dismiss'),
             { duration: 4000 }
           );
         }

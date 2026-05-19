@@ -194,7 +194,7 @@ class AuthServiceTest {
 
         verify(passwordResetRepository).deleteByUserId(user.getId());
         verify(passwordResetRepository).save(any(PasswordResetVerification.class));
-        verify(emailService).sendPasswordResetEmail(eq("test@example.com"), any());
+        verify(emailService).sendPasswordResetEmail(eq("test@example.com"), any(), any());
     }
 
     // --- resetPassword ---
@@ -272,7 +272,7 @@ class AuthServiceTest {
 
         verify(verificationRepository).deleteByUserId(user.getId());
         verify(verificationRepository).save(any(AccountVerification.class));
-        verify(emailService).sendVerificationEmail(eq("test@example.com"), any());
+        verify(emailService).sendVerificationEmail(eq("test@example.com"), any(), any());
     }
 
     // --- login with 2FA ---

@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
+import { TranslateModule } from '@ngx-translate/core';
 import { DashboardService } from './dashboard.service';
 import { DashboardResponse, InvoiceSummary } from './dashboard.model';
 import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.component';
@@ -16,14 +17,14 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
   imports: [
     CommonModule, DatePipe, DecimalPipe,
     MatCardModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatTableModule,
-    InvoiceStatusChipComponent
+    TranslateModule, InvoiceStatusChipComponent
   ],
   template: `
     <div style="padding:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h1 style="margin:0;">Dashboard</h1>
+        <h1 style="margin:0;">{{ 'dashboard.title' | translate }}</h1>
         <button mat-stroked-button (click)="service.load()" [disabled]="service.loading()">
-          <mat-icon>refresh</mat-icon> Refresh
+          <mat-icon>refresh</mat-icon> {{ 'dashboard.refresh' | translate }}
         </button>
       </div>
 
@@ -44,19 +45,19 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
           <mat-card style="margin-top:24px;">
             <mat-card-content style="text-align:center; padding:48px 24px;">
               <mat-icon style="font-size:64px; width:64px; height:64px; color:#1976d2;">rocket_launch</mat-icon>
-              <h2 style="margin:16px 0 8px;">Welcome to InvoiceFlow</h2>
+              <h2 style="margin:16px 0 8px;">{{ 'dashboard.welcome.title' | translate }}</h2>
               <p style="color:#666; max-width:480px; margin:0 auto 24px;">
-                You don't have any data yet. Start by adding a client, then create your first quote or invoice.
+                {{ 'dashboard.welcome.message' | translate }}
               </p>
               <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
                 <button mat-raised-button color="primary" (click)="newClient()">
-                  <mat-icon>person_add</mat-icon> Add a client
+                  <mat-icon>person_add</mat-icon> {{ 'dashboard.welcome.addClient' | translate }}
                 </button>
                 <button mat-stroked-button (click)="newQuote()">
-                  <mat-icon>request_quote</mat-icon> New quote
+                  <mat-icon>request_quote</mat-icon> {{ 'dashboard.welcome.newQuote' | translate }}
                 </button>
                 <button mat-stroked-button (click)="newInvoice()">
-                  <mat-icon>receipt_long</mat-icon> New invoice
+                  <mat-icon>receipt_long</mat-icon> {{ 'dashboard.welcome.newInvoice' | translate }}
                 </button>
               </div>
             </mat-card-content>
@@ -69,13 +70,13 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
             <mat-card-content>
               <div style="display:flex; align-items:center; gap:8px; color:#1b5e20;">
                 <mat-icon>payments</mat-icon>
-                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Revenue</span>
+                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">{{ 'dashboard.cards.revenue' | translate }}</span>
               </div>
               <div style="font-size:1.8rem; font-weight:600; margin-top:8px;">
                 {{ d.totals.revenue | number:'1.2-2' }} €
               </div>
               <div style="color:#555; font-size:0.85rem; margin-top:4px;">
-                {{ d.counts.paidInvoices }} paid invoice(s)
+                {{ 'dashboard.cards.paidInvoices' | translate:{ count: d.counts.paidInvoices } }}
               </div>
             </mat-card-content>
           </mat-card>
@@ -84,13 +85,13 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
             <mat-card-content>
               <div style="display:flex; align-items:center; gap:8px; color:#0d47a1;">
                 <mat-icon>hourglass_top</mat-icon>
-                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Outstanding</span>
+                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">{{ 'dashboard.cards.outstanding' | translate }}</span>
               </div>
               <div style="font-size:1.8rem; font-weight:600; margin-top:8px;">
                 {{ d.totals.outstanding | number:'1.2-2' }} €
               </div>
               <div style="color:#555; font-size:0.85rem; margin-top:4px;">
-                {{ d.counts.sentInvoices + d.counts.overdueInvoices }} open invoice(s)
+                {{ 'dashboard.cards.openInvoices' | translate:{ count: d.counts.sentInvoices + d.counts.overdueInvoices } }}
               </div>
             </mat-card-content>
           </mat-card>
@@ -100,14 +101,14 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
               <div style="display:flex; align-items:center; gap:8px;"
                    [style.color]="d.totals.overdue > 0 ? '#b71c1c' : '#666'">
                 <mat-icon>warning</mat-icon>
-                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Overdue</span>
+                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">{{ 'dashboard.cards.overdue' | translate }}</span>
               </div>
               <div style="font-size:1.8rem; font-weight:600; margin-top:8px;"
                    [style.color]="d.totals.overdue > 0 ? '#b71c1c' : '#222'">
                 {{ d.totals.overdue | number:'1.2-2' }} €
               </div>
               <div style="color:#555; font-size:0.85rem; margin-top:4px;">
-                {{ d.counts.overdueInvoices }} overdue invoice(s)
+                {{ 'dashboard.cards.overdueInvoices' | translate:{ count: d.counts.overdueInvoices } }}
               </div>
             </mat-card-content>
           </mat-card>
@@ -116,13 +117,13 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
             <mat-card-content>
               <div style="display:flex; align-items:center; gap:8px; color:#4a148c;">
                 <mat-icon>group</mat-icon>
-                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Clients</span>
+                <span style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">{{ 'dashboard.cards.clients' | translate }}</span>
               </div>
               <div style="font-size:1.8rem; font-weight:600; margin-top:8px;">
                 {{ d.counts.clients }}
               </div>
               <div style="color:#555; font-size:0.85rem; margin-top:4px;">
-                {{ d.counts.openQuotes }} open quote(s)
+                {{ 'dashboard.cards.openQuotes' | translate:{ count: d.counts.openQuotes } }}
               </div>
             </mat-card-content>
           </mat-card>
@@ -131,33 +132,33 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:16px; margin-top:24px;">
           <mat-card>
             <mat-card-content>
-              <h3 style="margin:0 0 12px;">Recent invoices</h3>
+              <h3 style="margin:0 0 12px;">{{ 'dashboard.recentInvoices.title' | translate }}</h3>
               <ng-container *ngIf="d.recentInvoices.length === 0; else recentInvoicesTable">
                 <div style="padding:16px; color:#777; background:#fafafa; border-radius:4px;">
-                  No invoices yet.
+                  {{ 'dashboard.recentInvoices.empty' | translate }}
                 </div>
               </ng-container>
               <ng-template #recentInvoicesTable>
                 <table mat-table [dataSource]="d.recentInvoices" style="width:100%;">
                   <ng-container matColumnDef="number">
-                    <th mat-header-cell *matHeaderCellDef>Number</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.number' | translate }}</th>
                     <td mat-cell *matCellDef="let inv">
                       <span *ngIf="inv.number; else recDraft">{{ inv.number }}</span>
-                      <ng-template #recDraft><span style="color:#999; font-style:italic;">— Draft —</span></ng-template>
+                      <ng-template #recDraft><span style="color:#999; font-style:italic;">{{ 'common.draft' | translate }}</span></ng-template>
                     </td>
                   </ng-container>
                   <ng-container matColumnDef="client">
-                    <th mat-header-cell *matHeaderCellDef>Client</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.client' | translate }}</th>
                     <td mat-cell *matCellDef="let inv">{{ inv.clientName }}</td>
                   </ng-container>
                   <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.status' | translate }}</th>
                     <td mat-cell *matCellDef="let inv">
                       <app-invoice-status-chip [status]="inv.status"></app-invoice-status-chip>
                     </td>
                   </ng-container>
                   <ng-container matColumnDef="amountDue">
-                    <th mat-header-cell *matHeaderCellDef style="text-align:right;">Amount due</th>
+                    <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'dashboard.table.amountDue' | translate }}</th>
                     <td mat-cell *matCellDef="let inv" style="text-align:right;"
                         [style.color]="inv.amountDue > 0 ? '#b71c1c' : '#1b5e20'">
                       {{ inv.amountDue | number:'1.2-2' }} €
@@ -175,28 +176,28 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
 
           <mat-card>
             <mat-card-content>
-              <h3 style="margin:0 0 12px;">Recent payments</h3>
+              <h3 style="margin:0 0 12px;">{{ 'dashboard.recentPayments.title' | translate }}</h3>
               <ng-container *ngIf="d.recentPayments.length === 0; else recentPaymentsTable">
                 <div style="padding:16px; color:#777; background:#fafafa; border-radius:4px;">
-                  No payments recorded yet.
+                  {{ 'dashboard.recentPayments.empty' | translate }}
                 </div>
               </ng-container>
               <ng-template #recentPaymentsTable>
                 <table mat-table [dataSource]="d.recentPayments" style="width:100%;">
                   <ng-container matColumnDef="paidAt">
-                    <th mat-header-cell *matHeaderCellDef>Date</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.date' | translate }}</th>
                     <td mat-cell *matCellDef="let p">{{ p.paidAt | date:'mediumDate' }}</td>
                   </ng-container>
                   <ng-container matColumnDef="invoice">
-                    <th mat-header-cell *matHeaderCellDef>Invoice</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.invoice' | translate }}</th>
                     <td mat-cell *matCellDef="let p">{{ p.invoiceNumber }}</td>
                   </ng-container>
                   <ng-container matColumnDef="client">
-                    <th mat-header-cell *matHeaderCellDef>Client</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.client' | translate }}</th>
                     <td mat-cell *matCellDef="let p">{{ p.clientName }}</td>
                   </ng-container>
                   <ng-container matColumnDef="amount">
-                    <th mat-header-cell *matHeaderCellDef style="text-align:right;">Amount</th>
+                    <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'dashboard.table.amount' | translate }}</th>
                     <td mat-cell *matCellDef="let p" style="text-align:right; color:#1b5e20;">
                       {{ p.amount | number:'1.2-2' }} €
                     </td>
@@ -215,29 +216,29 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
         <mat-card *ngIf="d.topOverdue.length > 0" style="margin-top:24px; border-left:4px solid #b71c1c;">
           <mat-card-content>
             <h3 style="margin:0 0 12px; color:#b71c1c; display:flex; align-items:center; gap:8px;">
-              <mat-icon>warning</mat-icon> Top overdue invoices
+              <mat-icon>warning</mat-icon> {{ 'dashboard.topOverdue.title' | translate }}
             </h3>
             <table mat-table [dataSource]="d.topOverdue" style="width:100%;">
               <ng-container matColumnDef="number">
-                <th mat-header-cell *matHeaderCellDef>Number</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.number' | translate }}</th>
                 <td mat-cell *matCellDef="let inv">{{ inv.number }}</td>
               </ng-container>
               <ng-container matColumnDef="client">
-                <th mat-header-cell *matHeaderCellDef>Client</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.client' | translate }}</th>
                 <td mat-cell *matCellDef="let inv">{{ inv.clientName }}</td>
               </ng-container>
               <ng-container matColumnDef="dueDate">
-                <th mat-header-cell *matHeaderCellDef>Due date</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'dashboard.table.dueDate' | translate }}</th>
                 <td mat-cell *matCellDef="let inv">{{ inv.dueDate | date:'mediumDate' }}</td>
               </ng-container>
               <ng-container matColumnDef="daysOverdue">
-                <th mat-header-cell *matHeaderCellDef style="text-align:right;">Days late</th>
+                <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'dashboard.table.daysLate' | translate }}</th>
                 <td mat-cell *matCellDef="let inv" style="text-align:right; color:#b71c1c; font-weight:500;">
                   {{ daysOverdue(inv.dueDate) }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="amountDue">
-                <th mat-header-cell *matHeaderCellDef style="text-align:right;">Amount due</th>
+                <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'dashboard.table.amountDue' | translate }}</th>
                 <td mat-cell *matCellDef="let inv" style="text-align:right; color:#b71c1c; font-weight:500;">
                   {{ inv.amountDue | number:'1.2-2' }} €
                 </td>
@@ -253,10 +254,10 @@ import { InvoiceStatusChipComponent } from '../invoices/invoice-status-chip.comp
 
         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:24px;">
           <button mat-raised-button color="primary" (click)="newInvoice()">
-            <mat-icon>add</mat-icon> New invoice
+            <mat-icon>add</mat-icon> {{ 'dashboard.actions.newInvoice' | translate }}
           </button>
           <button mat-stroked-button (click)="newQuote()">
-            <mat-icon>request_quote</mat-icon> New quote
+            <mat-icon>request_quote</mat-icon> {{ 'dashboard.actions.newQuote' | translate }}
           </button>
         </div>
         </ng-template>

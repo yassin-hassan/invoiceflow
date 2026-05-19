@@ -10,6 +10,7 @@ import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,7 +21,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InvoicePdfServiceTest {
 
-    private final InvoicePdfService service = new InvoicePdfService(null);
+    private final InvoicePdfService service = new InvoicePdfService(null, buildMessageSource());
+
+    private static ResourceBundleMessageSource buildMessageSource() {
+        ResourceBundleMessageSource source = new ResourceBundleMessageSource();
+        source.setBasename("messages");
+        source.setDefaultEncoding("UTF-8");
+        source.setDefaultLocale(java.util.Locale.FRENCH);
+        source.setFallbackToSystemLocale(false);
+        return source;
+    }
 
     private User user;
     private Client client;

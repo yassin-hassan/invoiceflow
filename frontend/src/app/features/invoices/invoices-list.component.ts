@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import { InvoicesService } from './invoices.service';
 import { Invoice, InvoiceStatus } from './invoice.model';
 import { InvoiceStatusChipComponent } from './invoice-status-chip.component';
@@ -27,14 +28,14 @@ function todayIso(): string {
     CommonModule, DatePipe, DecimalPipe, FormsModule,
     MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule,
     MatButtonModule, MatButtonToggleModule, MatProgressSpinnerModule, MatIconModule,
-    InvoiceStatusChipComponent
+    InvoiceStatusChipComponent, TranslateModule
   ],
   template: `
     <div style="padding:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h1 style="margin:0;">Invoices</h1>
+        <h1 style="margin:0;">{{ 'invoices.title' | translate }}</h1>
         <button mat-raised-button color="primary" (click)="openCreate()">
-          <mat-icon>add</mat-icon> New invoice
+          <mat-icon>add</mat-icon> {{ 'invoices.new' | translate }}
         </button>
       </div>
 
@@ -54,15 +55,15 @@ function todayIso(): string {
         <ng-container *ngIf="service.invoices().length === 0">
           <div style="text-align:center; padding:48px; color:#777;">
             <mat-icon style="font-size:48px; width:48px; height:48px;">receipt_long</mat-icon>
-            <p style="margin-top:16px;">No invoices yet.</p>
+            <p style="margin-top:16px;">{{ 'invoices.empty' | translate }}</p>
           </div>
         </ng-container>
 
         <ng-container *ngIf="service.invoices().length > 0">
           <div style="display:flex; gap:16px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
             <mat-form-field appearance="outline" style="width:320px; margin:0;">
-              <mat-label>Search</mat-label>
-              <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Number or client" />
+              <mat-label>{{ 'common.search' | translate }}</mat-label>
+              <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" [placeholder]="'invoices.searchPlaceholder' | translate" />
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
 
@@ -70,18 +71,18 @@ function todayIso(): string {
               [value]="statusFilter()"
               (change)="statusFilter.set($event.value)"
               style="height:40px; flex-wrap:wrap;">
-              <mat-button-toggle value="ALL">All</mat-button-toggle>
-              <mat-button-toggle value="DRAFT">Draft</mat-button-toggle>
-              <mat-button-toggle value="SENT">Sent</mat-button-toggle>
-              <mat-button-toggle value="PARTIALLY_PAID">Partially paid</mat-button-toggle>
-              <mat-button-toggle value="PAID">Paid</mat-button-toggle>
-              <mat-button-toggle value="OVERDUE">Overdue</mat-button-toggle>
-              <mat-button-toggle value="CANCELLED">Cancelled</mat-button-toggle>
+              <mat-button-toggle value="ALL">{{ 'invoices.filters.all' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="DRAFT">{{ 'invoices.filters.draft' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="SENT">{{ 'invoices.filters.sent' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="PARTIALLY_PAID">{{ 'invoices.filters.partiallyPaid' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="PAID">{{ 'invoices.filters.paid' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="OVERDUE">{{ 'invoices.filters.overdue' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="CANCELLED">{{ 'invoices.filters.cancelled' | translate }}</mat-button-toggle>
             </mat-button-toggle-group>
           </div>
 
           <ng-container *ngIf="visible().length === 0">
-            <div style="padding:24px; color:#777;">No invoices match the current filters.</div>
+            <div style="padding:24px; color:#777;">{{ 'invoices.noMatchFilters' | translate }}</div>
           </ng-container>
 
           <table
@@ -93,44 +94,44 @@ function todayIso(): string {
             style="width:100%; background:white;">
 
             <ng-container matColumnDef="number">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Number</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'invoices.columns.number' | translate }}</th>
               <td mat-cell *matCellDef="let inv">
                 <span *ngIf="inv.number; else draftLabel">{{ inv.number }}</span>
-                <ng-template #draftLabel><span style="color:#999; font-style:italic;">— Draft —</span></ng-template>
+                <ng-template #draftLabel><span style="color:#999; font-style:italic;">{{ 'common.draft' | translate }}</span></ng-template>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="client">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Client</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'invoices.columns.client' | translate }}</th>
               <td mat-cell *matCellDef="let inv">{{ inv.clientName }}</td>
             </ng-container>
 
             <ng-container matColumnDef="issueDate">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Issue date</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'invoices.columns.issueDate' | translate }}</th>
               <td mat-cell *matCellDef="let inv">{{ inv.issueDate | date:'mediumDate' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="dueDate">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Due date</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'invoices.columns.dueDate' | translate }}</th>
               <td mat-cell *matCellDef="let inv">{{ inv.dueDate | date:'mediumDate' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'invoices.columns.status' | translate }}</th>
               <td mat-cell *matCellDef="let inv">
                 <app-invoice-status-chip [status]="inv.status"></app-invoice-status-chip>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="totalInclVat">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">Total TTC</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">{{ 'invoices.columns.totalTtc' | translate }}</th>
               <td mat-cell *matCellDef="let inv" style="text-align:right;">
                 {{ inv.totalInclVat | number:'1.2-2' }} €
               </td>
             </ng-container>
 
             <ng-container matColumnDef="amountDue">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">Amount due</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">{{ 'invoices.columns.amountDue' | translate }}</th>
               <td mat-cell *matCellDef="let inv" style="text-align:right;"
                   [style.color]="inv.amountDue > 0 ? '#b71c1c' : '#1b5e20'"
                   [style.font-weight]="inv.amountDue > 0 ? '500' : '400'">

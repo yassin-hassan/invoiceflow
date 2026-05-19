@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -8,7 +8,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
+import { LanguageToggleComponent } from '../../../shared/components/language-toggle/language-toggle.component';
 import { extractErrorDetail } from '../../../core/utils/http-errors';
 
 @Component({
@@ -17,25 +19,29 @@ import { extractErrorDetail } from '../../../core/utils/http-errors';
   imports: [
     CommonModule, ReactiveFormsModule, RouterLink,
     MatCardModule, MatFormFieldModule, MatInputModule,
-    MatButtonModule, MatIconModule
+    MatButtonModule, MatIconModule,
+    TranslateModule, LanguageToggleComponent
   ],
   template: `
-    <div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#f5f5f5;">
+    <div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#f5f5f5; position:relative;">
+      <div style="position:absolute; top:16px; right:16px;">
+        <app-language-toggle></app-language-toggle>
+      </div>
       <mat-card style="width:440px; padding: 16px;">
         <mat-card-header>
           <mat-card-title style="font-size:1.5rem;">InvoiceFlow</mat-card-title>
-          <mat-card-subtitle>Sign in to your account</mat-card-subtitle>
+          <mat-card-subtitle>{{ 'auth.login.subtitle' | translate }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content style="margin-top: 16px;">
 
           <!-- Login form -->
           <form *ngIf="!showTwoFactor()" [formGroup]="loginForm" (ngSubmit)="onLogin()">
             <mat-form-field appearance="outline" style="width:100%;">
-              <mat-label>Email</mat-label>
+              <mat-label>{{ 'auth.fields.email' | translate }}</mat-label>
               <input matInput formControlName="email" type="email" />
             </mat-form-field>
             <mat-form-field appearance="outline" style="width:100%; margin-top:8px;">
-              <mat-label>Password</mat-label>
+              <mat-label>{{ 'auth.fields.password' | translate }}</mat-label>
               <input matInput formControlName="password" type="password" />
             </mat-form-field>
             <p *ngIf="error()" style="color: red; font-size:0.85rem;">{{ error() }}</p>
@@ -48,26 +54,26 @@ import { extractErrorDetail } from '../../../core/utils/http-errors';
               style="width:100%; margin-top:8px;"
               [disabled]="resending()"
               (click)="onResendVerification()">
-              {{ resending() ? 'Sending...' : 'Resend verification email' }}
+              {{ (resending() ? 'auth.login.resending' : 'auth.login.resend') | translate }}
             </button>
             <button mat-raised-button color="primary" style="width:100%; margin-top:8px;" type="submit" [disabled]="loading()">
-              {{ loading() ? 'Signing in...' : 'Sign in' }}
+              {{ (loading() ? 'auth.login.submitting' : 'auth.login.submit') | translate }}
             </button>
             <p style="text-align:center; margin-top:16px; font-size:0.875rem;">
-              No account yet? <a routerLink="/register">Sign up</a>
+              {{ 'auth.login.noAccount' | translate }} <a routerLink="/register">{{ 'auth.login.signup' | translate }}</a>
             </p>
           </form>
 
           <!-- 2FA form -->
           <form *ngIf="showTwoFactor()" [formGroup]="twoFactorForm" (ngSubmit)="onVerify2FA()">
-            <p style="color:#555;">Enter the 6-digit code sent to your phone.</p>
+            <p style="color:#555;">{{ 'auth.login.twofaPrompt' | translate }}</p>
             <mat-form-field appearance="outline" style="width:100%;">
-              <mat-label>Verification code</mat-label>
+              <mat-label>{{ 'auth.fields.code' | translate }}</mat-label>
               <input matInput formControlName="code" maxlength="6" inputmode="numeric" pattern="[0-9]*" />
             </mat-form-field>
             <p *ngIf="error()" style="color: red; font-size:0.85rem;">{{ error() }}</p>
             <button mat-raised-button color="primary" style="width:100%; margin-top:8px;" type="submit" [disabled]="loading()">
-              {{ loading() ? 'Verifying...' : 'Verify' }}
+              {{ (loading() ? 'auth.login.verifying' : 'auth.login.verify') | translate }}
             </button>
           </form>
 
@@ -77,6 +83,8 @@ import { extractErrorDetail } from '../../../core/utils/http-errors';
   `
 })
 export class LoginComponent {
+  private t = inject(TranslateService);
+
   loginForm: FormGroup;
   twoFactorForm: FormGroup;
   showTwoFactor = signal(false);
@@ -113,16 +121,16 @@ export class LoginComponent {
           this.auth.saveToken(res.token);
           this.router.navigate(['/dashboard']);
         } else {
-          this.error.set('Unexpected response from server. Please try again.');
+          this.error.set(this.t.instant('auth.errors.unexpected'));
         }
       },
       error: err => {
         this.loading.set(false);
         if (err.status === 403) {
           this.needsVerification.set(true);
-          this.error.set(extractErrorDetail(err, 'Email address not verified.'));
+          this.error.set(extractErrorDetail(err, this.t.instant('auth.errors.unverified')));
         } else {
-          this.error.set(extractErrorDetail(err, 'Invalid credentials'));
+          this.error.set(extractErrorDetail(err, this.t.instant('auth.errors.invalidCredentials')));
         }
       }
     });
@@ -138,11 +146,11 @@ export class LoginComponent {
       next: () => {
         this.resending.set(false);
         this.needsVerification.set(false);
-        this.info.set('Verification email sent. Check your inbox.');
+        this.info.set(this.t.instant('auth.login.resent'));
       },
       error: err => {
         this.resending.set(false);
-        this.error.set(extractErrorDetail(err, 'Could not resend verification email.'));
+        this.error.set(extractErrorDetail(err, this.t.instant('auth.errors.resendFailed')));
       }
     });
   }
@@ -161,7 +169,7 @@ export class LoginComponent {
       },
       error: err => {
         this.loading.set(false);
-        this.error.set(extractErrorDetail(err, 'Invalid code'));
+        this.error.set(extractErrorDetail(err, this.t.instant('auth.errors.invalidCode')));
       }
     });
   }

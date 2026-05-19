@@ -3,6 +3,7 @@ package com.example.invoiceflow.invoice;
 import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.client.ClientRepository;
+import com.example.invoiceflow.config.I18nConfig;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
 import com.example.invoiceflow.invoice.dto.CreateInvoiceRequest;
 import com.example.invoiceflow.invoice.dto.InvoiceLineRequest;
@@ -22,6 +23,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentLink;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -48,6 +51,7 @@ public class InvoiceService {
     private final UserService userService;
     private final EmailService emailService;
     private final StripeService stripeService;
+    private final MessageSource messageSource;
     @Lazy
     private final InvoicePdfService invoicePdfService;
 
@@ -186,22 +190,27 @@ public class InvoiceService {
         Invoice issued = assignNumberAndStatus(invoice, InvoiceStatus.SENT);
         issued.setSentAt(LocalDateTime.now());
 
-        tryAttachPaymentLink(issued, user);
+        Locale locale = I18nConfig.toLocale(user.getPreferredLanguage());
+        tryAttachPaymentLink(issued, user, locale);
 
-        byte[] pdf = invoicePdfService.generate(issued);
+        byte[] pdf = invoicePdfService.generate(issued, locale);
         String filename = issued.getNumber() + ".pdf";
-        String subject = buildInvoiceSubject(issued, user);
-        String body = buildInvoiceBody(issued, user);
+        String subject = buildInvoiceSubject(issued, user, locale);
+        String body = buildInvoiceBody(issued, user, locale);
         emailService.sendInvoice(recipient, subject, body, filename, pdf);
 
         return invoiceRepository.save(issued);
     }
 
-    private void tryAttachPaymentLink(Invoice invoice, User user) {
+    private void tryAttachPaymentLink(Invoice invoice, User user, Locale locale) {
         BigDecimal netAmount = computeTotalInclVat(invoice);
         if (netAmount.compareTo(BigDecimal.ZERO) <= 0) return;
 
-        String description = "Facture " + invoice.getNumber();
+        String description = messageSource.getMessage(
+                "email.invoice.descriptionPrefix",
+                new Object[]{invoice.getNumber()},
+                "Facture " + invoice.getNumber(),
+                locale);
         Map<String, String> metadata = Map.of(
                 "invoiceId", invoice.getId().toString(),
                 "userId", user.getId().toString()
@@ -228,14 +237,15 @@ public class InvoiceService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-    private String buildInvoiceSubject(Invoice invoice, User user) {
+    private String buildInvoiceSubject(Invoice invoice, User user, Locale locale) {
         String sender = (user.getCompanyName() != null && !user.getCompanyName().isBlank())
                 ? user.getCompanyName()
                 : (user.getFirstName() + " " + user.getLastName()).trim();
-        return "Facture " + invoice.getNumber() + " — " + sender;
+        return messageSource.getMessage("email.invoice.subject",
+                new Object[]{invoice.getNumber(), sender}, locale);
     }
 
-    private String buildInvoiceBody(Invoice invoice, User user) {
+    private String buildInvoiceBody(Invoice invoice, User user, Locale locale) {
         String sender = (user.getCompanyName() != null && !user.getCompanyName().isBlank())
                 ? user.getCompanyName()
                 : (user.getFirstName() + " " + user.getLastName()).trim();
@@ -248,24 +258,32 @@ public class InvoiceService {
                         .multiply(BigDecimal.ONE.add(l.getVatRate().divide(BigDecimal.valueOf(100)))))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, java.math.RoundingMode.HALF_UP);
-        String totalStr = String.format(java.util.Locale.of("fr", "BE"), "%,.2f €", totalInclVat);
+        Locale numberLocale = "en".equalsIgnoreCase(locale.getLanguage())
+                ? Locale.of("en", "IE")
+                : Locale.of("fr", "BE");
+        String totalStr = String.format(numberLocale, "%,.2f €", totalInclVat);
 
         StringBuilder html = new StringBuilder();
-        html.append("<p>Bonjour ").append(escapeHtml(clientName)).append(",</p>");
-        html.append("<p>Veuillez trouver ci-joint la facture <strong>").append(escapeHtml(number))
-                .append("</strong> d'un montant de <strong>").append(totalStr)
-                .append("</strong> TVAC, à régler avant le <strong>").append(dueDate).append("</strong>.</p>");
+        html.append(messageSource.getMessage("email.invoice.greeting",
+                new Object[]{escapeHtml(clientName)}, locale));
+        html.append(messageSource.getMessage("email.invoice.intro",
+                new Object[]{escapeHtml(number), totalStr, dueDate}, locale));
         if (invoice.getPaymentTerms() != null && !invoice.getPaymentTerms().isBlank()) {
             html.append("<p>").append(escapeHtml(invoice.getPaymentTerms())).append("</p>");
         }
         if (invoice.getStripePaymentLinkUrl() != null) {
-            html.append("<p style=\"margin-top:24px;\"><strong>Payer en ligne</strong><br>")
-                    .append("<a href=\"").append(escapeHtml(invoice.getStripePaymentLinkUrl()))
-                    .append("\">Régler cette facture — ").append(totalStr).append("</a><br>")
-                    .append("<span style=\"color:#666; font-size:0.9em;\">Bancontact, virement SEPA ou carte bancaire — paiement instantané.</span></p>");
+            String payOnlineTitle = messageSource.getMessage("email.invoice.payOnline.title", null, locale);
+            String payOnlineCta = messageSource.getMessage("email.invoice.payOnline.cta",
+                    new Object[]{totalStr}, locale);
+            String payOnlineMethods = messageSource.getMessage("email.invoice.payOnline.methods", null, locale);
+            html.append("<p style=\"margin-top:24px;\"><strong>").append(payOnlineTitle).append("</strong><br>")
+                    .append("<a href=\"").append(escapeHtml(invoice.getStripePaymentLinkUrl())).append("\">")
+                    .append(payOnlineCta).append("</a><br>")
+                    .append("<span style=\"color:#666; font-size:0.9em;\">").append(payOnlineMethods).append("</span></p>");
         }
-        html.append("<p>N'hésitez pas à me contacter pour toute question.</p>");
-        html.append("<p>Cordialement,<br>").append(escapeHtml(sender)).append("</p>");
+        html.append(messageSource.getMessage("email.invoice.questions", null, locale));
+        html.append(messageSource.getMessage("email.invoice.signature",
+                new Object[]{escapeHtml(sender)}, locale));
         return html.toString();
     }
 

@@ -8,6 +8,6 @@ import lombok.Data;
 public class ChangeLanguageRequest {
 
     @NotNull
-    @Pattern(regexp = "^(FR|EN)$", message = "language must be FR or EN")
+    @Pattern(regexp = "^(FR|EN)$", message = "{validation.language.invalid}")
     private String language;
 }

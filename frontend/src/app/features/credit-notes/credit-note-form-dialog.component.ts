@@ -9,6 +9,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { Invoice, InvoiceLine } from '../invoices/invoice.model';
 import { CreateCreditNoteRequest, CreditNoteLineRequest } from './credit-note.model';
 
@@ -32,24 +33,26 @@ function todayIso(): string {
   imports: [
     CommonModule, DecimalPipe, ReactiveFormsModule,
     MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatDatepickerModule, MatIconModule, MatCheckboxModule
+    MatDatepickerModule, MatIconModule, MatCheckboxModule, TranslateModule
   ],
   template: `
-    <h2 mat-dialog-title>Credit note for {{ data.invoice.number || 'draft invoice' }}</h2>
+    <h2 mat-dialog-title>
+      {{ 'creditNotes.form.title' | translate:{ number: data.invoice.number || ('creditNotes.form.draftInvoice' | translate) } }}
+    </h2>
     <form [formGroup]="form" (ngSubmit)="submit()">
       <mat-dialog-content style="min-width:560px; max-width:760px;">
         <div style="color:#666; margin-bottom:16px;">
-          Pick the lines to credit and the quantity. Each line is capped at the original quantity invoiced.
+          {{ 'creditNotes.form.intro' | translate }}
         </div>
 
         <table style="width:100%; border-collapse:collapse;" formArrayName="lines">
           <thead>
             <tr style="text-align:left; color:#555; font-size:0.85rem;">
-              <th style="padding:6px 4px;">Credit</th>
-              <th style="padding:6px 4px;">Description</th>
-              <th style="padding:6px 4px; text-align:right;">Remaining</th>
-              <th style="padding:6px 4px; text-align:right;">Unit price</th>
-              <th style="padding:6px 4px; text-align:right; width:130px;">Credit qty</th>
+              <th style="padding:6px 4px;">{{ 'creditNotes.form.credit' | translate }}</th>
+              <th style="padding:6px 4px;">{{ 'creditNotes.form.description' | translate }}</th>
+              <th style="padding:6px 4px; text-align:right;">{{ 'creditNotes.form.remaining' | translate }}</th>
+              <th style="padding:6px 4px; text-align:right;">{{ 'creditNotes.form.unitPrice' | translate }}</th>
+              <th style="padding:6px 4px; text-align:right; width:130px;">{{ 'creditNotes.form.creditQty' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -63,7 +66,7 @@ function todayIso(): string {
               <td style="padding:6px 4px;">
                 {{ row.line.description }}
                 <div *ngIf="row.alreadyCredited > 0" style="font-size:0.75rem; color:#888;">
-                  Already credited: {{ row.alreadyCredited | number:'1.0-2' }} of {{ row.line.quantity | number:'1.0-2' }}
+                  {{ 'creditNotes.form.alreadyCredited' | translate:{ credited: (row.alreadyCredited | number:'1.0-2'), total: (row.line.quantity | number:'1.0-2') } }}
                 </div>
               </td>
               <td style="padding:6px 4px; text-align:right;">{{ row.remaining | number:'1.0-2' }}</td>
@@ -80,33 +83,33 @@ function todayIso(): string {
 
         <div style="display:flex; justify-content:flex-end; margin-top:12px;">
           <strong style="color:#b71c1c;">
-            Credit total TTC: -{{ totalInclVat() | number:'1.2-2' }} €
+            {{ 'creditNotes.form.creditTotal' | translate:{ amount: (totalInclVat() | number:'1.2-2') } }}
           </strong>
         </div>
 
         <mat-form-field appearance="outline" style="width:100%; margin-top:16px;">
-          <mat-label>Issue date</mat-label>
+          <mat-label>{{ 'creditNotes.form.issueDate' | translate }}</mat-label>
           <input matInput [matDatepicker]="picker" formControlName="issueDate" />
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
 
         <mat-form-field appearance="outline" style="width:100%;">
-          <mat-label>Reason</mat-label>
-          <textarea matInput rows="3" formControlName="reason" placeholder="e.g. Wrong quantity invoiced"></textarea>
-          <mat-error *ngIf="form.controls.reason.hasError('required')">Required</mat-error>
+          <mat-label>{{ 'creditNotes.form.reason' | translate }}</mat-label>
+          <textarea matInput rows="3" formControlName="reason" [placeholder]="'creditNotes.form.reasonPlaceholder' | translate"></textarea>
+          <mat-error *ngIf="form.controls.reason.hasError('required')">{{ 'creditNotes.form.required' | translate }}</mat-error>
         </mat-form-field>
 
         <div *ngIf="noLinesSelected()" style="color:#b71c1c; margin-top:8px; font-size:0.85rem;">
-          Select at least one line with a quantity greater than 0.
+          {{ 'creditNotes.form.noLinesSelected' | translate }}
         </div>
       </mat-dialog-content>
 
       <mat-dialog-actions align="end">
-        <button type="button" mat-button (click)="ref.close()" [disabled]="submitting()">Cancel</button>
+        <button type="button" mat-button (click)="ref.close()" [disabled]="submitting()">{{ 'common.cancel' | translate }}</button>
         <button type="submit" mat-raised-button color="primary"
                 [disabled]="submitting() || form.invalid || noLinesSelected()">
-          Create draft
+          {{ 'creditNotes.form.createDraft' | translate }}
         </button>
       </mat-dialog-actions>
     </form>

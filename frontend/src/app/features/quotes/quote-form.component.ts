@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteRequest, Quote, UpdateQuoteRequest } from './quote.model';
 import { ClientsService } from '../clients/clients.service';
@@ -40,17 +41,20 @@ function round2(n: number): number {
   imports: [
     CommonModule, DecimalPipe, ReactiveFormsModule, RouterLink,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
-    MatIconModule, MatSnackBarModule, MatProgressSpinnerModule, MatTooltipModule
+    MatIconModule, MatSnackBarModule, MatProgressSpinnerModule, MatTooltipModule,
+    TranslateModule
   ],
   template: `
     <div style="padding:24px; max-width:1100px;">
       <a routerLink="/quotes" style="display:inline-flex; align-items:center; gap:4px; color:#1976d2; text-decoration:none; margin-bottom:16px;">
         <mat-icon style="font-size:18px; width:18px; height:18px;">arrow_back</mat-icon>
-        Back to quotes
+        {{ 'quotes.backToList' | translate }}
       </a>
 
       <h1 style="margin:0 0 16px;">
-        {{ editingId() ? 'Edit ' + (quoteNumber() || 'quote') : 'New quote' }}
+        {{ editingId()
+            ? (('quotes.form.editTitlePrefix' | translate) + (quoteNumber() || ('quotes.form.fallbackTitle' | translate)))
+            : ('quotes.form.newTitle' | translate) }}
       </h1>
 
       <ng-container *ngIf="loadingQuote()">
@@ -68,33 +72,33 @@ function round2(n: number): number {
       <form *ngIf="!loadingQuote() && !loadError()" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div style="display:flex; gap:16px; flex-wrap:wrap;">
           <mat-form-field appearance="outline" style="flex:1 1 280px;">
-            <mat-label>Client</mat-label>
+            <mat-label>{{ 'quotes.form.client' | translate }}</mat-label>
             <mat-select formControlName="clientId">
               <mat-option *ngFor="let c of clientList()" [value]="c.id">{{ c.name }}</mat-option>
             </mat-select>
-            <mat-error *ngIf="form.get('clientId')?.hasError('required')">Client is required</mat-error>
+            <mat-error *ngIf="form.get('clientId')?.hasError('required')">{{ 'quotes.form.requiredClient' | translate }}</mat-error>
             <mat-error *ngIf="form.get('clientId')?.hasError('server')">{{ form.get('clientId')?.getError('server') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" style="flex:0 1 180px;">
-            <mat-label>Issue date</mat-label>
+            <mat-label>{{ 'quotes.form.issueDate' | translate }}</mat-label>
             <input matInput type="date" formControlName="issueDate" />
             <mat-error *ngIf="form.get('issueDate')?.hasError('server')">{{ form.get('issueDate')?.getError('server') }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" style="flex:0 1 180px;">
-            <mat-label>Expiry date</mat-label>
+            <mat-label>{{ 'quotes.form.expiryDate' | translate }}</mat-label>
             <input matInput type="date" formControlName="expiryDate" />
             <mat-error *ngIf="form.get('expiryDate')?.hasError('server')">{{ form.get('expiryDate')?.getError('server') }}</mat-error>
           </mat-form-field>
         </div>
 
         <mat-form-field appearance="outline" style="width:100%;">
-          <mat-label>Notes</mat-label>
+          <mat-label>{{ 'quotes.form.notes' | translate }}</mat-label>
           <textarea matInput rows="2" formControlName="notes"></textarea>
         </mat-form-field>
 
-        <h3 style="margin:16px 0 8px;">Lines</h3>
+        <h3 style="margin:16px 0 8px;">{{ 'quotes.linesHeading' | translate }}</h3>
 
         <div formArrayName="lines" style="display:flex; flex-direction:column; gap:12px;">
           <div
@@ -103,39 +107,39 @@ function round2(n: number): number {
             style="display:grid; grid-template-columns: 200px 1fr 90px 110px 100px 110px auto; gap:8px; align-items:start; padding:12px; background:#fafafa; border-radius:4px;">
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Product</mat-label>
+              <mat-label>{{ 'quotes.form.product' | translate }}</mat-label>
               <mat-select formControlName="productId" (selectionChange)="onProductChange(i, $event.value)">
-                <mat-option [value]="''">— Ad-hoc —</mat-option>
+                <mat-option [value]="''">{{ 'quotes.form.adhoc' | translate }}</mat-option>
                 <mat-option *ngFor="let p of productList()" [value]="p.id">{{ p.name }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Description</mat-label>
+              <mat-label>{{ 'quotes.form.description' | translate }}</mat-label>
               <input matInput formControlName="description" />
-              <mat-error *ngIf="line.get('description')?.hasError('required')">Required</mat-error>
-              <mat-error *ngIf="line.get('description')?.hasError('maxlength')">Too long</mat-error>
+              <mat-error *ngIf="line.get('description')?.hasError('required')">{{ 'quotes.form.required' | translate }}</mat-error>
+              <mat-error *ngIf="line.get('description')?.hasError('maxlength')">{{ 'quotes.form.tooLong' | translate }}</mat-error>
               <mat-error *ngIf="line.get('description')?.hasError('server')">{{ line.get('description')?.getError('server') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Qty</mat-label>
+              <mat-label>{{ 'quotes.form.qty' | translate }}</mat-label>
               <input matInput type="number" step="0.01" min="0.01" formControlName="quantity" />
-              <mat-error *ngIf="line.get('quantity')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="line.get('quantity')?.hasError('required')">{{ 'quotes.form.required' | translate }}</mat-error>
               <mat-error *ngIf="line.get('quantity')?.hasError('min')">&gt; 0</mat-error>
               <mat-error *ngIf="line.get('quantity')?.hasError('server')">{{ line.get('quantity')?.getError('server') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Unit price</mat-label>
+              <mat-label>{{ 'quotes.form.unitPrice' | translate }}</mat-label>
               <input matInput type="number" step="0.01" min="0" formControlName="unitPrice" />
-              <mat-error *ngIf="line.get('unitPrice')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="line.get('unitPrice')?.hasError('required')">{{ 'quotes.form.required' | translate }}</mat-error>
               <mat-error *ngIf="line.get('unitPrice')?.hasError('min')">≥ 0</mat-error>
               <mat-error *ngIf="line.get('unitPrice')?.hasError('server')">{{ line.get('unitPrice')?.getError('server') }}</mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>VAT</mat-label>
+              <mat-label>{{ 'quotes.form.vat' | translate }}</mat-label>
               <mat-select formControlName="vatRate">
                 <mat-option *ngFor="let r of vatRates" [value]="r">{{ r }}%</mat-option>
               </mat-select>
@@ -144,18 +148,18 @@ function round2(n: number): number {
             <div style="text-align:right; padding-top:14px; font-weight:500;">
               {{ totalsByLine()[i]?.inclVat | number:'1.2-2' }} €
               <div style="font-size:0.75rem; color:#666; font-weight:400;">
-                HT {{ totalsByLine()[i]?.exclVat | number:'1.2-2' }} €
+                {{ 'quotes.totals.ht' | translate }} {{ totalsByLine()[i]?.exclVat | number:'1.2-2' }} €
               </div>
             </div>
 
             <div style="display:flex; flex-direction:column; gap:4px;">
-              <button mat-icon-button type="button" (click)="moveUp(i)" [disabled]="i === 0" matTooltip="Move up">
+              <button mat-icon-button type="button" (click)="moveUp(i)" [disabled]="i === 0" [matTooltip]="'quotes.form.moveUp' | translate">
                 <mat-icon>arrow_upward</mat-icon>
               </button>
-              <button mat-icon-button type="button" (click)="moveDown(i)" [disabled]="i === lines.length - 1" matTooltip="Move down">
+              <button mat-icon-button type="button" (click)="moveDown(i)" [disabled]="i === lines.length - 1" [matTooltip]="'quotes.form.moveDown' | translate">
                 <mat-icon>arrow_downward</mat-icon>
               </button>
-              <button mat-icon-button type="button" color="warn" (click)="removeLine(i)" [disabled]="lines.length <= 1" matTooltip="Remove">
+              <button mat-icon-button type="button" color="warn" (click)="removeLine(i)" [disabled]="lines.length <= 1" [matTooltip]="'quotes.form.remove' | translate">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -163,16 +167,16 @@ function round2(n: number): number {
         </div>
 
         <button mat-stroked-button type="button" (click)="addLine()" style="margin-top:12px;">
-          <mat-icon>add</mat-icon> Add line
+          <mat-icon>add</mat-icon> {{ 'quotes.form.addLine' | translate }}
         </button>
 
         <div style="display:flex; justify-content:flex-end; margin-top:24px;">
           <dl style="display:grid; grid-template-columns:auto auto; gap:4px 24px; margin:0; min-width:280px;">
-            <dt style="color:#666;">Subtotal HT</dt>
+            <dt style="color:#666;">{{ 'quotes.totals.subtotalHt' | translate }}</dt>
             <dd style="margin:0; text-align:right;">{{ quoteTotals().subtotalExclVat | number:'1.2-2' }} €</dd>
-            <dt style="color:#666;">VAT</dt>
+            <dt style="color:#666;">{{ 'quotes.totals.vat' | translate }}</dt>
             <dd style="margin:0; text-align:right;">{{ quoteTotals().totalVat | number:'1.2-2' }} €</dd>
-            <dt style="font-weight:600; font-size:1.05rem;">Total TTC</dt>
+            <dt style="font-weight:600; font-size:1.05rem;">{{ 'quotes.totals.totalTtc' | translate }}</dt>
             <dd style="margin:0; text-align:right; font-weight:600; font-size:1.05rem;">
               {{ quoteTotals().totalInclVat | number:'1.2-2' }} €
             </dd>
@@ -182,9 +186,9 @@ function round2(n: number): number {
         <p *ngIf="error()" style="color:#b71c1c; margin-top:12px;">{{ error() }}</p>
 
         <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
-          <a mat-button routerLink="/quotes" [class.mat-button-disabled]="loading()">Cancel</a>
+          <a mat-button routerLink="/quotes" [class.mat-button-disabled]="loading()">{{ 'common.cancel' | translate }}</a>
           <button mat-raised-button color="primary" type="submit" [disabled]="loading()">
-            {{ loading() ? 'Saving...' : (editingId() ? 'Save changes' : 'Create quote') }}
+            {{ (loading() ? 'quotes.form.saving' : (editingId() ? 'quotes.form.saveChanges' : 'quotes.form.create')) | translate }}
           </button>
         </div>
       </form>
@@ -199,6 +203,7 @@ export class QuoteFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private snack = inject(MatSnackBar);
+  private t = inject(TranslateService);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -253,7 +258,7 @@ export class QuoteFormComponent implements OnInit {
       next: q => {
         if (q.status !== 'DRAFT') {
           this.loadingQuote.set(false);
-          this.snack.open('Only DRAFT quotes can be edited.', 'Dismiss', { duration: 3000 });
+          this.snack.open(this.t.instant('quotes.form.onlyDraftEditable'), this.t.instant('common.dismiss'), { duration: 3000 });
           this.router.navigate(['/quotes', q.id]);
           return;
         }
@@ -262,7 +267,7 @@ export class QuoteFormComponent implements OnInit {
       },
       error: err => {
         this.loadingQuote.set(false);
-        this.loadError.set(extractErrorDetail(err, 'Quote not found.'));
+        this.loadError.set(extractErrorDetail(err, this.t.instant('quotes.form.notFound')));
       }
     });
   }
@@ -352,7 +357,8 @@ export class QuoteFormComponent implements OnInit {
     request$.subscribe({
       next: q => {
         this.loading.set(false);
-        this.snack.open(id ? `Quote ${q.number} updated` : `Quote ${q.number} created`, 'Dismiss', { duration: 2500 });
+        const key = id ? 'quotes.form.updated' : 'quotes.form.created';
+        this.snack.open(this.t.instant(key, { number: q.number }), this.t.instant('common.dismiss'), { duration: 2500 });
         this.router.navigate(['/quotes', q.id]);
       },
       error: err => {
@@ -366,9 +372,9 @@ export class QuoteFormComponent implements OnInit {
               ctrl.markAsTouched();
             }
           }
-          this.error.set('Please correct the highlighted errors.');
+          this.error.set(this.t.instant('quotes.form.correctErrors'));
         } else {
-          this.error.set(extractErrorDetail(err, 'Could not save quote.'));
+          this.error.set(extractErrorDetail(err, this.t.instant('quotes.form.saveFailed')));
         }
       }
     });

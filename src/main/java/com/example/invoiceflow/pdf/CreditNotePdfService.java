@@ -1,6 +1,7 @@
 package com.example.invoiceflow.pdf;
 
 import com.example.invoiceflow.client.Client;
+import com.example.invoiceflow.config.I18nConfig;
 import com.example.invoiceflow.creditnote.CreditNote;
 import com.example.invoiceflow.creditnote.CreditNoteLine;
 import com.example.invoiceflow.creditnote.CreditNoteService;
@@ -22,6 +23,7 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +42,10 @@ import java.util.UUID;
 public class CreditNotePdfService {
 
     private final CreditNoteService creditNoteService;
+    private final MessageSource messageSource;
 
     private static final Locale FR_BE = Locale.of("fr", "BE");
+    private static final Locale EN_IE = Locale.of("en", "IE");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final Color BRAND = new Color(63, 81, 181);
     private static final Color MUTED = new Color(100, 100, 100);
@@ -60,10 +64,11 @@ public class CreditNotePdfService {
     public RenderedPdf generateForUser(String email, UUID creditNoteId) {
         CreditNote creditNote = creditNoteService.get(email, creditNoteId);
         forceInitialize(creditNote);
+        Locale locale = I18nConfig.toLocale(creditNote.getUser().getPreferredLanguage());
         String filename = (creditNote.getNumber() != null
                 ? creditNote.getNumber()
                 : "brouillon-av-" + creditNote.getId()) + ".pdf";
-        return new RenderedPdf(filename, generate(creditNote));
+        return new RenderedPdf(filename, generate(creditNote, locale));
     }
 
     private void forceInitialize(CreditNote creditNote) {
@@ -79,6 +84,11 @@ public class CreditNotePdfService {
     }
 
     public byte[] generate(CreditNote creditNote) {
+        return generate(creditNote, I18nConfig.DEFAULT_LOCALE);
+    }
+
+    public byte[] generate(CreditNote creditNote, Locale locale) {
+        Locale l = locale != null ? locale : I18nConfig.DEFAULT_LOCALE;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document doc = new Document(PageSize.A4, 40, 40, 40, 50);
         try {
@@ -86,19 +96,19 @@ public class CreditNotePdfService {
             doc.open();
 
             if (creditNote.getNumber() == null) {
-                addDraftBanner(doc);
+                addDraftBanner(doc, l);
             }
 
-            addHeader(doc, creditNote);
+            addHeader(doc, creditNote, l);
             doc.add(spacer(12));
-            addPartiesBlock(doc, creditNote);
+            addPartiesBlock(doc, creditNote, l);
             doc.add(spacer(12));
-            addReasonBlock(doc, creditNote);
+            addReasonBlock(doc, creditNote, l);
             doc.add(spacer(12));
-            addLinesTable(doc, creditNote);
+            addLinesTable(doc, creditNote, l);
             doc.add(spacer(8));
-            addTotalsBlock(doc, creditNote);
-            addFooter(doc, creditNote);
+            addTotalsBlock(doc, creditNote, l);
+            addFooter(doc, creditNote, l);
 
             doc.close();
         } catch (DocumentException ex) {
@@ -107,10 +117,10 @@ public class CreditNotePdfService {
         return out.toByteArray();
     }
 
-    private void addDraftBanner(Document doc) throws DocumentException {
+    private void addDraftBanner(Document doc, Locale l) throws DocumentException {
         PdfPTable banner = new PdfPTable(1);
         banner.setWidthPercentage(100);
-        PdfPCell cell = new PdfPCell(new Phrase("BROUILLON — Sans valeur légale", DRAFT_FONT));
+        PdfPCell cell = new PdfPCell(new Phrase(t("pdf.draftBanner", l), DRAFT_FONT));
         cell.setBackgroundColor(new Color(255, 235, 238));
         cell.setBorderColor(DRAFT_RED);
         cell.setBorderWidth(1f);
@@ -121,7 +131,7 @@ public class CreditNotePdfService {
         doc.add(spacer(8));
     }
 
-    private void addHeader(Document doc, CreditNote creditNote) throws DocumentException {
+    private void addHeader(Document doc, CreditNote creditNote, Locale l) throws DocumentException {
         User user = creditNote.getUser();
         Invoice invoice = creditNote.getOriginalInvoice();
         PdfPTable header = new PdfPTable(2);
@@ -135,7 +145,7 @@ public class CreditNotePdfService {
             sellerCell.addElement(new Paragraph(formatAddress(user.getBillingAddress()), SMALL));
         }
         if (user.getVatNumber() != null) {
-            sellerCell.addElement(new Paragraph("TVA : " + user.getVatNumber(), SMALL));
+            sellerCell.addElement(new Paragraph(t("pdf.vatLabel", l) + " " + user.getVatNumber(), SMALL));
         }
         if (user.getEmail() != null) {
             sellerCell.addElement(new Paragraph(user.getEmail(), SMALL));
@@ -145,7 +155,7 @@ public class CreditNotePdfService {
         PdfPCell metaCell = new PdfPCell();
         metaCell.setBorder(Rectangle.NO_BORDER);
         metaCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        Paragraph title = new Paragraph("Note de crédit", H1);
+        Paragraph title = new Paragraph(t("pdf.creditnote.title", l), H1);
         title.setAlignment(Element.ALIGN_RIGHT);
         metaCell.addElement(title);
         if (creditNote.getNumber() != null) {
@@ -153,11 +163,11 @@ public class CreditNotePdfService {
             number.setAlignment(Element.ALIGN_RIGHT);
             metaCell.addElement(number);
         }
-        Paragraph issue = new Paragraph("Émise le " + DATE_FMT.format(creditNote.getIssueDate()), SMALL);
+        Paragraph issue = new Paragraph(t("pdf.issuedOn", l, DATE_FMT.format(creditNote.getIssueDate())), SMALL);
         issue.setAlignment(Element.ALIGN_RIGHT);
         metaCell.addElement(issue);
         if (invoice.getNumber() != null) {
-            Paragraph ref = new Paragraph("Réf. facture : " + invoice.getNumber(), SMALL);
+            Paragraph ref = new Paragraph(t("pdf.invoiceRef", l, invoice.getNumber()), SMALL);
             ref.setAlignment(Element.ALIGN_RIGHT);
             metaCell.addElement(ref);
         }
@@ -166,7 +176,7 @@ public class CreditNotePdfService {
         doc.add(header);
     }
 
-    private void addPartiesBlock(Document doc, CreditNote creditNote) throws DocumentException {
+    private void addPartiesBlock(Document doc, CreditNote creditNote, Locale l) throws DocumentException {
         Client client = creditNote.getOriginalInvoice().getClient();
         PdfPTable table = new PdfPTable(2);
         table.setWidthPercentage(100);
@@ -180,13 +190,13 @@ public class CreditNotePdfService {
         billTo.setBorder(Rectangle.NO_BORDER);
         billTo.setPaddingLeft(8f);
         billTo.setBackgroundColor(new Color(245, 247, 250));
-        billTo.addElement(new Paragraph("Crédit à", SMALL));
+        billTo.addElement(new Paragraph(t("pdf.creditnote.creditedTo", l), SMALL));
         billTo.addElement(new Paragraph(client.getName(), H2));
         if (client.getBillingAddress() != null) {
             billTo.addElement(new Paragraph(formatAddress(client.getBillingAddress()), BODY));
         }
         if (client.getVatNumber() != null) {
-            billTo.addElement(new Paragraph("TVA : " + client.getVatNumber(), BODY));
+            billTo.addElement(new Paragraph(t("pdf.vatLabel", l) + " " + client.getVatNumber(), BODY));
         }
         if (client.getEmail() != null) {
             billTo.addElement(new Paragraph(client.getEmail(), SMALL));
@@ -196,33 +206,33 @@ public class CreditNotePdfService {
         doc.add(table);
     }
 
-    private void addReasonBlock(Document doc, CreditNote creditNote) throws DocumentException {
+    private void addReasonBlock(Document doc, CreditNote creditNote, Locale l) throws DocumentException {
         Paragraph reason = new Paragraph();
-        reason.add(new Chunk("Motif : ", BODY_BOLD));
+        reason.add(new Chunk(t("pdf.creditnote.reason", l) + " ", BODY_BOLD));
         reason.add(new Chunk(creditNote.getReason(), BODY));
         doc.add(reason);
     }
 
-    private void addLinesTable(Document doc, CreditNote creditNote) throws DocumentException {
+    private void addLinesTable(Document doc, CreditNote creditNote, Locale l) throws DocumentException {
         PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
         table.setWidths(new float[]{50, 10, 15, 10, 15});
 
-        addLinesHeaderCell(table, "Description", Element.ALIGN_LEFT);
-        addLinesHeaderCell(table, "Qté", Element.ALIGN_RIGHT);
-        addLinesHeaderCell(table, "P.U. HTVA", Element.ALIGN_RIGHT);
-        addLinesHeaderCell(table, "TVA", Element.ALIGN_RIGHT);
-        addLinesHeaderCell(table, "Total HTVA", Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.description", l), Element.ALIGN_LEFT);
+        addLinesHeaderCell(table, t("pdf.col.qty", l), Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.unitPriceExclVat", l), Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.vat", l), Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.totalExclVat", l), Element.ALIGN_RIGHT);
 
         creditNote.getLines().stream()
                 .sorted(Comparator.comparingInt(CreditNoteLine::getSortOrder))
                 .forEach(line -> {
                     InvoiceLine source = line.getInvoiceLine();
                     addLineCell(table, source.getDescription(), Element.ALIGN_LEFT);
-                    addLineCell(table, formatQuantity(line.getQuantity()), Element.ALIGN_RIGHT);
-                    addLineCell(table, formatCurrency(source.getUnitPrice()), Element.ALIGN_RIGHT);
-                    addLineCell(table, formatPercent(source.getVatRate()), Element.ALIGN_RIGHT);
-                    addLineCell(table, formatCurrency(lineTotalExclVat(line).negate()), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatQuantity(line.getQuantity(), l), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatCurrency(source.getUnitPrice(), l), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatPercent(source.getVatRate(), l), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatCurrency(lineTotalExclVat(line).negate(), l), Element.ALIGN_RIGHT);
                 });
 
         doc.add(table);
@@ -246,7 +256,7 @@ public class CreditNotePdfService {
         table.addCell(cell);
     }
 
-    private void addTotalsBlock(Document doc, CreditNote creditNote) throws DocumentException {
+    private void addTotalsBlock(Document doc, CreditNote creditNote, Locale l) throws DocumentException {
         BigDecimal subtotal = creditNote.getLines().stream()
                 .map(this::lineTotalExclVat)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -272,9 +282,9 @@ public class CreditNotePdfService {
         PdfPTable totals = new PdfPTable(2);
         totals.setWidthPercentage(100);
         totals.setWidths(new float[]{60, 40});
-        addTotalsRow(totals, "Sous-total HTVA", formatCurrency(subtotal.negate()), false);
-        addTotalsRow(totals, "TVA", formatCurrency(totalVat.negate()), false);
-        addTotalsRow(totals, "Total TVAC", formatCurrency(totalInclVat.negate()), true);
+        addTotalsRow(totals, t("pdf.totals.subtotalExclVat", l), formatCurrency(subtotal.negate(), l), false);
+        addTotalsRow(totals, t("pdf.totals.vat", l), formatCurrency(totalVat.negate(), l), false);
+        addTotalsRow(totals, t("pdf.totals.totalInclVat", l), formatCurrency(totalInclVat.negate(), l), true);
         right.addElement(totals);
         wrapper.addCell(right);
 
@@ -298,11 +308,11 @@ public class CreditNotePdfService {
         table.addCell(valueCell);
     }
 
-    private void addFooter(Document doc, CreditNote creditNote) throws DocumentException {
+    private void addFooter(Document doc, CreditNote creditNote, Locale l) throws DocumentException {
         doc.add(spacer(20));
-        String footer = "Document généré automatiquement par InvoiceFlow.";
+        String footer = t("pdf.footer.auto", l);
         if (creditNote.getUser().getVatNumber() == null) {
-            footer += " Régime particulier de franchise des petites entreprises.";
+            footer += " " + t("pdf.footer.smallBusiness", l);
         }
         Paragraph p = new Paragraph(footer, SMALL);
         p.setAlignment(Element.ALIGN_CENTER);
@@ -346,24 +356,33 @@ public class CreditNotePdfService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-    private String formatCurrency(BigDecimal amount) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(FR_BE);
+    private static Locale numberLocale(Locale l) {
+        return (l != null && "en".equalsIgnoreCase(l.getLanguage())) ? EN_IE : FR_BE;
+    }
+
+    private String formatCurrency(BigDecimal amount, Locale l) {
+        NumberFormat fmt = NumberFormat.getNumberInstance(numberLocale(l));
         fmt.setMinimumFractionDigits(2);
         fmt.setMaximumFractionDigits(2);
         return fmt.format(amount) + " €";
     }
 
-    private String formatQuantity(BigDecimal qty) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(FR_BE);
+    private String formatQuantity(BigDecimal qty, Locale l) {
+        NumberFormat fmt = NumberFormat.getNumberInstance(numberLocale(l));
         fmt.setMinimumFractionDigits(0);
         fmt.setMaximumFractionDigits(2);
         return fmt.format(qty);
     }
 
-    private String formatPercent(BigDecimal rate) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(FR_BE);
+    private String formatPercent(BigDecimal rate, Locale l) {
+        NumberFormat fmt = NumberFormat.getNumberInstance(numberLocale(l));
         fmt.setMinimumFractionDigits(0);
         fmt.setMaximumFractionDigits(2);
         return fmt.format(rate) + " %";
+    }
+
+    private String t(String code, Locale l, Object... args) {
+        if (messageSource == null) return code;
+        return messageSource.getMessage(code, args, code, l);
     }
 }

@@ -2,6 +2,11 @@ spring:
   application:
     name: invoiceflow
 
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/invoiceflow
     username: invoiceflow
@@ -58,3 +63,14 @@ app:
 stripe:
   secret-key: ${STRIPE_SECRET_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  packages-to-scan: com.example.invoiceflow
+  paths-to-match: /api/**

@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import { QuotesService } from './quotes.service';
 import { Quote, QuoteStatus } from './quote.model';
 import { StatusChipComponent } from './status-chip.component';
@@ -23,14 +24,14 @@ type StatusFilter = 'ALL' | QuoteStatus;
     CommonModule, DatePipe, DecimalPipe, FormsModule,
     MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule,
     MatButtonModule, MatButtonToggleModule, MatProgressSpinnerModule, MatIconModule,
-    StatusChipComponent
+    StatusChipComponent, TranslateModule
   ],
   template: `
     <div style="padding:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h1 style="margin:0;">Quotes</h1>
+        <h1 style="margin:0;">{{ 'quotes.title' | translate }}</h1>
         <button mat-raised-button color="primary" (click)="openCreate()">
-          <mat-icon>add</mat-icon> New quote
+          <mat-icon>add</mat-icon> {{ 'quotes.new' | translate }}
         </button>
       </div>
 
@@ -50,15 +51,15 @@ type StatusFilter = 'ALL' | QuoteStatus;
         <ng-container *ngIf="service.quotes().length === 0">
           <div style="text-align:center; padding:48px; color:#777;">
             <mat-icon style="font-size:48px; width:48px; height:48px;">request_quote</mat-icon>
-            <p style="margin-top:16px;">No quotes yet.</p>
+            <p style="margin-top:16px;">{{ 'quotes.empty' | translate }}</p>
           </div>
         </ng-container>
 
         <ng-container *ngIf="service.quotes().length > 0">
           <div style="display:flex; gap:16px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
             <mat-form-field appearance="outline" style="width:320px; margin:0;">
-              <mat-label>Search</mat-label>
-              <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Number or client" />
+              <mat-label>{{ 'common.search' | translate }}</mat-label>
+              <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" [placeholder]="'quotes.searchPlaceholder' | translate" />
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
 
@@ -66,17 +67,17 @@ type StatusFilter = 'ALL' | QuoteStatus;
               [value]="statusFilter()"
               (change)="statusFilter.set($event.value)"
               style="height:40px;">
-              <mat-button-toggle value="ALL">All</mat-button-toggle>
-              <mat-button-toggle value="DRAFT">Draft</mat-button-toggle>
-              <mat-button-toggle value="SENT">Sent</mat-button-toggle>
-              <mat-button-toggle value="ACCEPTED">Accepted</mat-button-toggle>
-              <mat-button-toggle value="REJECTED">Rejected</mat-button-toggle>
-              <mat-button-toggle value="CONVERTED">Converted</mat-button-toggle>
+              <mat-button-toggle value="ALL">{{ 'quotes.filters.all' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="DRAFT">{{ 'quotes.filters.draft' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="SENT">{{ 'quotes.filters.sent' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="ACCEPTED">{{ 'quotes.filters.accepted' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="REJECTED">{{ 'quotes.filters.rejected' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="CONVERTED">{{ 'quotes.filters.converted' | translate }}</mat-button-toggle>
             </mat-button-toggle-group>
           </div>
 
           <ng-container *ngIf="visible().length === 0">
-            <div style="padding:24px; color:#777;">No quotes match the current filters.</div>
+            <div style="padding:24px; color:#777;">{{ 'quotes.noMatchFilters' | translate }}</div>
           </ng-container>
 
           <table
@@ -88,29 +89,29 @@ type StatusFilter = 'ALL' | QuoteStatus;
             style="width:100%; background:white;">
 
             <ng-container matColumnDef="number">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Number</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'quotes.columns.number' | translate }}</th>
               <td mat-cell *matCellDef="let q">{{ q.number }}</td>
             </ng-container>
 
             <ng-container matColumnDef="client">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Client</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'quotes.columns.client' | translate }}</th>
               <td mat-cell *matCellDef="let q">{{ q.clientName }}</td>
             </ng-container>
 
             <ng-container matColumnDef="issueDate">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Issue date</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'quotes.columns.issueDate' | translate }}</th>
               <td mat-cell *matCellDef="let q">{{ q.issueDate | date:'mediumDate' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'quotes.columns.status' | translate }}</th>
               <td mat-cell *matCellDef="let q">
                 <app-status-chip [status]="q.status"></app-status-chip>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="totalInclVat">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">Total TTC</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">{{ 'quotes.columns.totalTtc' | translate }}</th>
               <td mat-cell *matCellDef="let q" style="text-align:right;">
                 {{ q.totalInclVat | number:'1.2-2' }} €
               </td>

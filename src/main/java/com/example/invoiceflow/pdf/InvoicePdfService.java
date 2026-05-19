@@ -1,6 +1,7 @@
 package com.example.invoiceflow.pdf;
 
 import com.example.invoiceflow.client.Client;
+import com.example.invoiceflow.config.I18nConfig;
 import com.example.invoiceflow.invoice.Invoice;
 import com.example.invoiceflow.invoice.InvoiceLine;
 import com.example.invoiceflow.invoice.InvoiceService;
@@ -20,6 +21,7 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,8 +40,10 @@ import java.util.UUID;
 public class InvoicePdfService {
 
     private final InvoiceService invoiceService;
+    private final MessageSource messageSource;
 
     private static final Locale FR_BE = Locale.of("fr", "BE");
+    private static final Locale EN_IE = Locale.of("en", "IE");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final Color BRAND = new Color(63, 81, 181);
     private static final Color MUTED = new Color(100, 100, 100);
@@ -58,8 +62,9 @@ public class InvoicePdfService {
     public RenderedPdf generateForUser(String email, UUID invoiceId) {
         Invoice invoice = invoiceService.getInvoice(email, invoiceId);
         forceInitialize(invoice);
+        Locale locale = I18nConfig.toLocale(invoice.getUser().getPreferredLanguage());
         String filename = (invoice.getNumber() != null ? invoice.getNumber() : "brouillon-" + invoice.getId()) + ".pdf";
-        return new RenderedPdf(filename, generate(invoice));
+        return new RenderedPdf(filename, generate(invoice, locale));
     }
 
     private void forceInitialize(Invoice invoice) {
@@ -72,6 +77,11 @@ public class InvoicePdfService {
     }
 
     public byte[] generate(Invoice invoice) {
+        return generate(invoice, I18nConfig.DEFAULT_LOCALE);
+    }
+
+    public byte[] generate(Invoice invoice, Locale locale) {
+        Locale l = locale != null ? locale : I18nConfig.DEFAULT_LOCALE;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Document doc = new Document(PageSize.A4, 40, 40, 40, 50);
         try {
@@ -79,18 +89,18 @@ public class InvoicePdfService {
             doc.open();
 
             if (invoice.getNumber() == null) {
-                addDraftBanner(doc);
+                addDraftBanner(doc, l);
             }
 
-            addHeader(doc, invoice);
+            addHeader(doc, invoice, l);
             doc.add(spacer(12));
-            addPartiesBlock(doc, invoice);
+            addPartiesBlock(doc, invoice, l);
             doc.add(spacer(16));
-            addLinesTable(doc, invoice);
+            addLinesTable(doc, invoice, l);
             doc.add(spacer(8));
-            addTotalsBlock(doc, invoice);
-            addPaymentTerms(doc, invoice);
-            addFooter(doc, invoice);
+            addTotalsBlock(doc, invoice, l);
+            addPaymentTerms(doc, invoice, l);
+            addFooter(doc, invoice, l);
 
             doc.close();
         } catch (DocumentException ex) {
@@ -99,10 +109,10 @@ public class InvoicePdfService {
         return out.toByteArray();
     }
 
-    private void addDraftBanner(Document doc) throws DocumentException {
+    private void addDraftBanner(Document doc, Locale l) throws DocumentException {
         PdfPTable banner = new PdfPTable(1);
         banner.setWidthPercentage(100);
-        PdfPCell cell = new PdfPCell(new Phrase("BROUILLON — Sans valeur légale", DRAFT_FONT));
+        PdfPCell cell = new PdfPCell(new Phrase(t("pdf.draftBanner", l), DRAFT_FONT));
         cell.setBackgroundColor(new Color(255, 235, 238));
         cell.setBorderColor(DRAFT_RED);
         cell.setBorderWidth(1f);
@@ -113,7 +123,7 @@ public class InvoicePdfService {
         doc.add(spacer(8));
     }
 
-    private void addHeader(Document doc, Invoice invoice) throws DocumentException {
+    private void addHeader(Document doc, Invoice invoice, Locale l) throws DocumentException {
         User user = invoice.getUser();
         PdfPTable header = new PdfPTable(2);
         header.setWidthPercentage(100);
@@ -126,7 +136,7 @@ public class InvoicePdfService {
             sellerCell.addElement(new Paragraph(formatAddress(user.getBillingAddress()), SMALL));
         }
         if (user.getVatNumber() != null) {
-            sellerCell.addElement(new Paragraph("TVA : " + user.getVatNumber(), SMALL));
+            sellerCell.addElement(new Paragraph(t("pdf.vatLabel", l) + " " + user.getVatNumber(), SMALL));
         }
         if (user.getEmail() != null) {
             sellerCell.addElement(new Paragraph(user.getEmail(), SMALL));
@@ -136,7 +146,7 @@ public class InvoicePdfService {
         PdfPCell metaCell = new PdfPCell();
         metaCell.setBorder(Rectangle.NO_BORDER);
         metaCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        Paragraph title = new Paragraph("Facture", H1);
+        Paragraph title = new Paragraph(t("pdf.invoice.title", l), H1);
         title.setAlignment(Element.ALIGN_RIGHT);
         metaCell.addElement(title);
         if (invoice.getNumber() != null) {
@@ -144,10 +154,10 @@ public class InvoicePdfService {
             number.setAlignment(Element.ALIGN_RIGHT);
             metaCell.addElement(number);
         }
-        Paragraph issue = new Paragraph("Émise le " + DATE_FMT.format(invoice.getIssueDate()), SMALL);
+        Paragraph issue = new Paragraph(t("pdf.issuedOn", l, DATE_FMT.format(invoice.getIssueDate())), SMALL);
         issue.setAlignment(Element.ALIGN_RIGHT);
         metaCell.addElement(issue);
-        Paragraph due = new Paragraph("Échéance : " + DATE_FMT.format(invoice.getDueDate()), SMALL);
+        Paragraph due = new Paragraph(t("pdf.dueOn", l, DATE_FMT.format(invoice.getDueDate())), SMALL);
         due.setAlignment(Element.ALIGN_RIGHT);
         metaCell.addElement(due);
         header.addCell(metaCell);
@@ -155,7 +165,7 @@ public class InvoicePdfService {
         doc.add(header);
     }
 
-    private void addPartiesBlock(Document doc, Invoice invoice) throws DocumentException {
+    private void addPartiesBlock(Document doc, Invoice invoice, Locale l) throws DocumentException {
         Client client = invoice.getClient();
         PdfPTable table = new PdfPTable(2);
         table.setWidthPercentage(100);
@@ -169,13 +179,13 @@ public class InvoicePdfService {
         billTo.setBorder(Rectangle.NO_BORDER);
         billTo.setPaddingLeft(8f);
         billTo.setBackgroundColor(new Color(245, 247, 250));
-        billTo.addElement(new Paragraph("Facturé à", SMALL));
+        billTo.addElement(new Paragraph(t("pdf.invoice.billedTo", l), SMALL));
         billTo.addElement(new Paragraph(client.getName(), H2));
         if (client.getBillingAddress() != null) {
             billTo.addElement(new Paragraph(formatAddress(client.getBillingAddress()), BODY));
         }
         if (client.getVatNumber() != null) {
-            billTo.addElement(new Paragraph("TVA : " + client.getVatNumber(), BODY));
+            billTo.addElement(new Paragraph(t("pdf.vatLabel", l) + " " + client.getVatNumber(), BODY));
         }
         if (client.getEmail() != null) {
             billTo.addElement(new Paragraph(client.getEmail(), SMALL));
@@ -185,25 +195,25 @@ public class InvoicePdfService {
         doc.add(table);
     }
 
-    private void addLinesTable(Document doc, Invoice invoice) throws DocumentException {
+    private void addLinesTable(Document doc, Invoice invoice, Locale l) throws DocumentException {
         PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
         table.setWidths(new float[]{50, 10, 15, 10, 15});
 
-        addLinesHeaderCell(table, "Description", Element.ALIGN_LEFT);
-        addLinesHeaderCell(table, "Qté", Element.ALIGN_RIGHT);
-        addLinesHeaderCell(table, "P.U. HTVA", Element.ALIGN_RIGHT);
-        addLinesHeaderCell(table, "TVA", Element.ALIGN_RIGHT);
-        addLinesHeaderCell(table, "Total HTVA", Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.description", l), Element.ALIGN_LEFT);
+        addLinesHeaderCell(table, t("pdf.col.qty", l), Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.unitPriceExclVat", l), Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.vat", l), Element.ALIGN_RIGHT);
+        addLinesHeaderCell(table, t("pdf.col.totalExclVat", l), Element.ALIGN_RIGHT);
 
         invoice.getLines().stream()
                 .sorted(Comparator.comparingInt(this::lineSortKey))
                 .forEach(line -> {
                     addLineCell(table, line.getDescription(), Element.ALIGN_LEFT);
-                    addLineCell(table, formatQuantity(line.getQuantity()), Element.ALIGN_RIGHT);
-                    addLineCell(table, formatCurrency(line.getUnitPrice()), Element.ALIGN_RIGHT);
-                    addLineCell(table, formatPercent(line.getVatRate()), Element.ALIGN_RIGHT);
-                    addLineCell(table, formatCurrency(lineTotalExclVat(line)), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatQuantity(line.getQuantity(), l), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatCurrency(line.getUnitPrice(), l), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatPercent(line.getVatRate(), l), Element.ALIGN_RIGHT);
+                    addLineCell(table, formatCurrency(lineTotalExclVat(line), l), Element.ALIGN_RIGHT);
                 });
 
         doc.add(table);
@@ -231,7 +241,7 @@ public class InvoicePdfService {
         table.addCell(cell);
     }
 
-    private void addTotalsBlock(Document doc, Invoice invoice) throws DocumentException {
+    private void addTotalsBlock(Document doc, Invoice invoice, Locale l) throws DocumentException {
         BigDecimal subtotal = invoice.getLines().stream()
                 .map(this::lineTotalExclVat)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -259,12 +269,12 @@ public class InvoicePdfService {
         PdfPTable totals = new PdfPTable(2);
         totals.setWidthPercentage(100);
         totals.setWidths(new float[]{60, 40});
-        addTotalsRow(totals, "Sous-total HTVA", formatCurrency(subtotal), false);
-        addTotalsRow(totals, "TVA", formatCurrency(totalVat), false);
-        addTotalsRow(totals, "Total TVAC", formatCurrency(totalInclVat), true);
+        addTotalsRow(totals, t("pdf.totals.subtotalExclVat", l), formatCurrency(subtotal, l), false);
+        addTotalsRow(totals, t("pdf.totals.vat", l), formatCurrency(totalVat, l), false);
+        addTotalsRow(totals, t("pdf.totals.totalInclVat", l), formatCurrency(totalInclVat, l), true);
         if (amountPaid.signum() > 0) {
-            addTotalsRow(totals, "Déjà payé", formatCurrency(amountPaid), false);
-            addTotalsRow(totals, "Solde dû", formatCurrency(amountDue), true);
+            addTotalsRow(totals, t("pdf.totals.alreadyPaid", l), formatCurrency(amountPaid, l), false);
+            addTotalsRow(totals, t("pdf.totals.balanceDue", l), formatCurrency(amountDue, l), true);
         }
         right.addElement(totals);
         wrapper.addCell(right);
@@ -289,20 +299,20 @@ public class InvoicePdfService {
         table.addCell(valueCell);
     }
 
-    private void addPaymentTerms(Document doc, Invoice invoice) throws DocumentException {
+    private void addPaymentTerms(Document doc, Invoice invoice, Locale l) throws DocumentException {
         if (invoice.getPaymentTerms() == null || invoice.getPaymentTerms().isBlank()) return;
         doc.add(spacer(14));
         Paragraph terms = new Paragraph();
-        terms.add(new Chunk("Conditions de paiement : ", BODY_BOLD));
+        terms.add(new Chunk(t("pdf.invoice.paymentTerms", l) + " ", BODY_BOLD));
         terms.add(new Chunk(invoice.getPaymentTerms(), BODY));
         doc.add(terms);
     }
 
-    private void addFooter(Document doc, Invoice invoice) throws DocumentException {
+    private void addFooter(Document doc, Invoice invoice, Locale l) throws DocumentException {
         doc.add(spacer(20));
-        String footer = "Document généré automatiquement par InvoiceFlow.";
+        String footer = t("pdf.footer.auto", l);
         if (invoice.getUser().getVatNumber() == null) {
-            footer += " Régime particulier de franchise des petites entreprises.";
+            footer += " " + t("pdf.footer.smallBusiness", l);
         }
         Paragraph p = new Paragraph(footer, SMALL);
         p.setAlignment(Element.ALIGN_CENTER);
@@ -344,24 +354,33 @@ public class InvoicePdfService {
         return line.getQuantity().multiply(line.getUnitPrice()).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private String formatCurrency(BigDecimal amount) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(FR_BE);
+    private static Locale numberLocale(Locale l) {
+        return (l != null && "en".equalsIgnoreCase(l.getLanguage())) ? EN_IE : FR_BE;
+    }
+
+    private String formatCurrency(BigDecimal amount, Locale l) {
+        NumberFormat fmt = NumberFormat.getNumberInstance(numberLocale(l));
         fmt.setMinimumFractionDigits(2);
         fmt.setMaximumFractionDigits(2);
         return fmt.format(amount) + " €";
     }
 
-    private String formatQuantity(BigDecimal qty) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(FR_BE);
+    private String formatQuantity(BigDecimal qty, Locale l) {
+        NumberFormat fmt = NumberFormat.getNumberInstance(numberLocale(l));
         fmt.setMinimumFractionDigits(0);
         fmt.setMaximumFractionDigits(2);
         return fmt.format(qty);
     }
 
-    private String formatPercent(BigDecimal rate) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(FR_BE);
+    private String formatPercent(BigDecimal rate, Locale l) {
+        NumberFormat fmt = NumberFormat.getNumberInstance(numberLocale(l));
         fmt.setMinimumFractionDigits(0);
         fmt.setMaximumFractionDigits(2);
         return fmt.format(rate) + " %";
+    }
+
+    private String t(String code, Locale l, Object... args) {
+        if (messageSource == null) return code;
+        return messageSource.getMessage(code, args, code, l);
     }
 }

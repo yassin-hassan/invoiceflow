@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ClientsService } from './clients.service';
 import { Client } from './client.model';
 import { ClientFormDialogComponent } from './client-form-dialog.component';
@@ -23,14 +24,15 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   imports: [
     CommonModule, DatePipe, FormsModule,
     MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule,
-    MatButtonModule, MatProgressSpinnerModule, MatIconModule, MatSnackBarModule
+    MatButtonModule, MatProgressSpinnerModule, MatIconModule, MatSnackBarModule,
+    TranslateModule
   ],
   template: `
     <div style="padding:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h1 style="margin:0;">Clients</h1>
+        <h1 style="margin:0;">{{ 'clients.title' | translate }}</h1>
         <button mat-raised-button color="primary" (click)="openCreate()">
-          <mat-icon>add</mat-icon> New client
+          <mat-icon>add</mat-icon> {{ 'clients.new' | translate }}
         </button>
       </div>
 
@@ -50,19 +52,19 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
         <ng-container *ngIf="service.clients().length === 0">
           <div style="text-align:center; padding:48px; color:#777;">
             <mat-icon style="font-size:48px; width:48px; height:48px;">people_outline</mat-icon>
-            <p style="margin-top:16px;">No clients yet.</p>
+            <p style="margin-top:16px;">{{ 'clients.empty' | translate }}</p>
           </div>
         </ng-container>
 
         <ng-container *ngIf="service.clients().length > 0">
           <mat-form-field appearance="outline" style="width:320px; margin-bottom:8px;">
-            <mat-label>Search</mat-label>
-            <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Name or email" />
+            <mat-label>{{ 'common.search' | translate }}</mat-label>
+            <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" [placeholder]="'clients.searchPlaceholder' | translate" />
             <mat-icon matSuffix>search</mat-icon>
           </mat-form-field>
 
           <ng-container *ngIf="visible().length === 0">
-            <div style="padding:24px; color:#777;">No clients match "{{ search() }}".</div>
+            <div style="padding:24px; color:#777;">{{ 'clients.noMatch' | translate:{ search: search() } }}</div>
           </ng-container>
 
           <table
@@ -74,37 +76,37 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
             style="width:100%; background:white;">
 
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'clients.columns.name' | translate }}</th>
               <td mat-cell *matCellDef="let c">{{ c.name }}</td>
             </ng-container>
 
             <ng-container matColumnDef="email">
-              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'clients.columns.email' | translate }}</th>
               <td mat-cell *matCellDef="let c">{{ c.email }}</td>
             </ng-container>
 
             <ng-container matColumnDef="phone">
-              <th mat-header-cell *matHeaderCellDef>Phone</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'clients.columns.phone' | translate }}</th>
               <td mat-cell *matCellDef="let c">{{ c.phone || '—' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="vatNumber">
-              <th mat-header-cell *matHeaderCellDef>VAT</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'clients.columns.vat' | translate }}</th>
               <td mat-cell *matCellDef="let c">{{ c.vatNumber || '—' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="createdAt">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'clients.columns.created' | translate }}</th>
               <td mat-cell *matCellDef="let c">{{ c.createdAt | date:'mediumDate' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef style="width:112px;"></th>
               <td mat-cell *matCellDef="let c">
-                <button mat-icon-button (click)="openEdit(c); $event.stopPropagation()" aria-label="Edit">
+                <button mat-icon-button (click)="openEdit(c); $event.stopPropagation()" [attr.aria-label]="'common.edit' | translate">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button (click)="archive(c); $event.stopPropagation()" aria-label="Delete">
+                <button mat-icon-button (click)="archive(c); $event.stopPropagation()" [attr.aria-label]="'common.delete' | translate">
                   <mat-icon>delete</mat-icon>
                 </button>
               </td>
@@ -125,6 +127,7 @@ export class ClientsComponent implements OnInit {
   service = inject(ClientsService);
   private dialog = inject(MatDialog);
   private snack = inject(MatSnackBar);
+  private t = inject(TranslateService);
   columns = ['name', 'email', 'phone', 'vatNumber', 'createdAt', 'actions'];
 
   search = signal('');
@@ -180,9 +183,10 @@ export class ClientsComponent implements OnInit {
   archive(client: Client): void {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete client?',
-        message: `If "${client.name}" has any quote or invoice, they'll be archived. Otherwise, they'll be deleted permanently.`,
-        confirmLabel: 'Delete',
+        title: this.t.instant('clients.deleteConfirm.title'),
+        message: this.t.instant('clients.deleteConfirm.message', { name: client.name }),
+        confirmLabel: this.t.instant('clients.deleteConfirm.confirm'),
+        cancelLabel: this.t.instant('common.cancel'),
         confirmColor: 'warn'
       }
     });
@@ -192,14 +196,14 @@ export class ClientsComponent implements OnInit {
         next: res => {
           this.service.clients.update(list => list.filter(c => c.id !== client.id));
           const msg = res.mode === 'ARCHIVED'
-            ? `${client.name} archived (linked documents kept)`
-            : `${client.name} deleted`;
-          this.snack.open(msg, 'Dismiss', { duration: 3000 });
+            ? this.t.instant('clients.archived', { name: client.name })
+            : this.t.instant('clients.deleted', { name: client.name });
+          this.snack.open(msg, this.t.instant('common.dismiss'), { duration: 3000 });
         },
         error: err => {
           this.snack.open(
-            extractErrorDetail(err, 'Could not delete client.'),
-            'Dismiss',
+            extractErrorDetail(err, this.t.instant('clients.deleteFailed')),
+            this.t.instant('common.dismiss'),
             { duration: 4000 }
           );
         }

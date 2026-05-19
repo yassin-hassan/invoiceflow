@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { QuotesService } from './quotes.service';
 import { Quote, QuoteStatus } from './quote.model';
 import { StatusChipComponent } from './status-chip.component';
@@ -19,13 +20,13 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
   imports: [
     CommonModule, DatePipe, DecimalPipe, RouterLink,
     MatTableModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule,
-    MatDialogModule, StatusChipComponent
+    MatDialogModule, StatusChipComponent, TranslateModule
   ],
   template: `
     <div style="padding:24px;">
       <a routerLink="/quotes" style="display:inline-flex; align-items:center; gap:4px; color:#1976d2; text-decoration:none; margin-bottom:16px;">
         <mat-icon style="font-size:18px; width:18px; height:18px;">arrow_back</mat-icon>
-        Back to quotes
+        {{ 'quotes.backToList' | translate }}
       </a>
 
       <ng-container *ngIf="loading()">
@@ -48,69 +49,69 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
               <app-status-chip [status]="q.status"></app-status-chip>
             </div>
             <div style="color:#555; margin-top:8px;">
-              <strong>Client:</strong> {{ q.clientName }} &nbsp;·&nbsp;
-              <strong>Issue:</strong> {{ q.issueDate | date:'mediumDate' }} &nbsp;·&nbsp;
-              <strong>Expiry:</strong> {{ q.expiryDate | date:'mediumDate' }}
+              <strong>{{ 'quotes.detail.client' | translate }}:</strong> {{ q.clientName }} &nbsp;·&nbsp;
+              <strong>{{ 'quotes.detail.issue' | translate }}:</strong> {{ q.issueDate | date:'mediumDate' }} &nbsp;·&nbsp;
+              <strong>{{ 'quotes.detail.expiry' | translate }}:</strong> {{ q.expiryDate | date:'mediumDate' }}
             </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <ng-container [ngSwitch]="q.status">
               <ng-container *ngSwitchCase="'DRAFT'">
                 <button mat-raised-button color="primary" (click)="edit()" [disabled]="acting()">
-                  <mat-icon>edit</mat-icon> Edit
+                  <mat-icon>edit</mat-icon> {{ 'quotes.detail.edit' | translate }}
                 </button>
                 <button mat-raised-button color="accent" (click)="send()" [disabled]="acting()">
-                  <mat-icon>send</mat-icon> Send
+                  <mat-icon>send</mat-icon> {{ 'quotes.detail.send' | translate }}
                 </button>
                 <button mat-stroked-button color="warn" (click)="remove()" [disabled]="acting()">
-                  <mat-icon>delete</mat-icon> Delete
+                  <mat-icon>delete</mat-icon> {{ 'quotes.detail.delete' | translate }}
                 </button>
               </ng-container>
               <ng-container *ngSwitchCase="'SENT'">
                 <button mat-raised-button color="primary" (click)="markAccepted()" [disabled]="acting()">
-                  <mat-icon>check_circle</mat-icon> Mark accepted
+                  <mat-icon>check_circle</mat-icon> {{ 'quotes.detail.markAccepted' | translate }}
                 </button>
                 <button mat-stroked-button color="warn" (click)="markRejected()" [disabled]="acting()">
-                  <mat-icon>cancel</mat-icon> Mark rejected
+                  <mat-icon>cancel</mat-icon> {{ 'quotes.detail.markRejected' | translate }}
                 </button>
               </ng-container>
               <ng-container *ngSwitchCase="'ACCEPTED'">
                 <button mat-raised-button color="primary" (click)="convert()" [disabled]="acting()">
-                  <mat-icon>receipt_long</mat-icon> Convert to invoice
+                  <mat-icon>receipt_long</mat-icon> {{ 'quotes.detail.convertToInvoice' | translate }}
                 </button>
               </ng-container>
               <ng-container *ngSwitchCase="'CONVERTED'">
                 <span style="color:#666; font-style:italic;">
                   <ng-container *ngIf="convertedInvoice() as inv; else convertedFallback">
-                    Converted to invoice {{ inv.number }}.
+                    {{ 'quotes.detail.convertedTo' | translate:{ number: inv.number } }}
                   </ng-container>
-                  <ng-template #convertedFallback>Converted to invoice.</ng-template>
+                  <ng-template #convertedFallback>{{ 'quotes.detail.convertedFallback' | translate }}</ng-template>
                 </span>
               </ng-container>
             </ng-container>
           </div>
         </div>
 
-        <h3 style="margin:24px 0 8px;">Lines</h3>
+        <h3 style="margin:24px 0 8px;">{{ 'quotes.linesHeading' | translate }}</h3>
         <table mat-table [dataSource]="q.lines" style="width:100%; background:white;">
           <ng-container matColumnDef="description">
-            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'quotes.detail.lineDescription' | translate }}</th>
             <td mat-cell *matCellDef="let l">{{ l.description }}</td>
           </ng-container>
           <ng-container matColumnDef="quantity">
-            <th mat-header-cell *matHeaderCellDef style="text-align:right;">Qty</th>
+            <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'quotes.detail.lineQty' | translate }}</th>
             <td mat-cell *matCellDef="let l" style="text-align:right;">{{ l.quantity | number:'1.0-2' }}</td>
           </ng-container>
           <ng-container matColumnDef="unitPrice">
-            <th mat-header-cell *matHeaderCellDef style="text-align:right;">Unit price</th>
+            <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'quotes.detail.lineUnitPrice' | translate }}</th>
             <td mat-cell *matCellDef="let l" style="text-align:right;">{{ l.unitPrice | number:'1.2-2' }} €</td>
           </ng-container>
           <ng-container matColumnDef="vatRate">
-            <th mat-header-cell *matHeaderCellDef style="text-align:right;">VAT</th>
+            <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'quotes.detail.lineVat' | translate }}</th>
             <td mat-cell *matCellDef="let l" style="text-align:right;">{{ l.vatRate }}%</td>
           </ng-container>
           <ng-container matColumnDef="totalExclVat">
-            <th mat-header-cell *matHeaderCellDef style="text-align:right;">Line total HT</th>
+            <th mat-header-cell *matHeaderCellDef style="text-align:right;">{{ 'quotes.detail.lineTotalHt' | translate }}</th>
             <td mat-cell *matCellDef="let l" style="text-align:right;">{{ l.totalExclVat | number:'1.2-2' }} €</td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="lineColumns"></tr>
@@ -119,11 +120,11 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
 
         <div style="display:flex; justify-content:flex-end; margin-top:16px;">
           <dl style="display:grid; grid-template-columns:auto auto; gap:4px 24px; margin:0; min-width:280px;">
-            <dt style="color:#666;">Subtotal HT</dt>
+            <dt style="color:#666;">{{ 'quotes.totals.subtotalHt' | translate }}</dt>
             <dd style="margin:0; text-align:right;">{{ q.subtotalExclVat | number:'1.2-2' }} €</dd>
-            <dt style="color:#666;">VAT</dt>
+            <dt style="color:#666;">{{ 'quotes.totals.vat' | translate }}</dt>
             <dd style="margin:0; text-align:right;">{{ q.totalVat | number:'1.2-2' }} €</dd>
-            <dt style="font-weight:600; font-size:1.05rem;">Total TTC</dt>
+            <dt style="font-weight:600; font-size:1.05rem;">{{ 'quotes.totals.totalTtc' | translate }}</dt>
             <dd style="margin:0; text-align:right; font-weight:600; font-size:1.05rem;">
               {{ q.totalInclVat | number:'1.2-2' }} €
             </dd>
@@ -131,7 +132,7 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
         </div>
 
         <ng-container *ngIf="q.notes">
-          <h3 style="margin:24px 0 8px;">Notes</h3>
+          <h3 style="margin:24px 0 8px;">{{ 'quotes.notesHeading' | translate }}</h3>
           <div style="white-space:pre-wrap; padding:12px; background:#fafafa; border-radius:4px;">{{ q.notes }}</div>
         </ng-container>
       </ng-container>
@@ -144,6 +145,7 @@ export class QuoteDetailComponent implements OnInit {
   private quotes = inject(QuotesService);
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private t = inject(TranslateService);
 
   quote = signal<Quote | null>(null);
   loading = signal(false);
@@ -155,7 +157,7 @@ export class QuoteDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.error.set('Missing quote id.');
+      this.error.set(this.t.instant('quotes.detail.missingId'));
       return;
     }
     this.loading.set(true);
@@ -165,7 +167,7 @@ export class QuoteDetailComponent implements OnInit {
         this.loading.set(false);
       },
       error: err => {
-        this.error.set(extractErrorDetail(err, 'Quote not found.'));
+        this.error.set(extractErrorDetail(err, this.t.instant('quotes.detail.notFound')));
         this.loading.set(false);
       }
     });
@@ -179,33 +181,33 @@ export class QuoteDetailComponent implements OnInit {
   send(): void {
     this.confirmAndTransition({
       next: 'SENT',
-      title: 'Send quote',
-      message: 'Once sent, the quote becomes read-only and the status changes to SENT.',
-      confirmLabel: 'Send',
+      titleKey: 'quotes.send.title',
+      messageKey: 'quotes.send.message',
+      confirmKey: 'quotes.send.confirm',
       confirmColor: 'primary',
-      successMessage: 'Quote marked as sent.'
+      successKey: 'quotes.send.success'
     });
   }
 
   markAccepted(): void {
     this.confirmAndTransition({
       next: 'ACCEPTED',
-      title: 'Mark quote accepted',
-      message: 'The client has accepted this quote. You will then be able to convert it into an invoice.',
-      confirmLabel: 'Mark accepted',
+      titleKey: 'quotes.accept.title',
+      messageKey: 'quotes.accept.message',
+      confirmKey: 'quotes.accept.confirm',
       confirmColor: 'primary',
-      successMessage: 'Quote marked as accepted.'
+      successKey: 'quotes.accept.success'
     });
   }
 
   markRejected(): void {
     this.confirmAndTransition({
       next: 'REJECTED',
-      title: 'Mark quote rejected',
-      message: 'The client has rejected this quote. This action is final — the quote cannot be reopened or edited.',
-      confirmLabel: 'Mark rejected',
+      titleKey: 'quotes.reject.title',
+      messageKey: 'quotes.reject.message',
+      confirmKey: 'quotes.reject.confirm',
       confirmColor: 'warn',
-      successMessage: 'Quote marked as rejected.'
+      successKey: 'quotes.reject.success'
     });
   }
 
@@ -214,9 +216,10 @@ export class QuoteDetailComponent implements OnInit {
     if (!q) return;
     this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Convert to invoice',
-        message: 'A new DRAFT invoice will be created from this quote, and the quote will be marked CONVERTED. This cannot be undone.',
-        confirmLabel: 'Convert',
+        title: this.t.instant('quotes.convert.title'),
+        message: this.t.instant('quotes.convert.message'),
+        confirmLabel: this.t.instant('quotes.convert.confirm'),
+        cancelLabel: this.t.instant('common.cancel'),
         confirmColor: 'primary'
       }
     }).afterClosed().subscribe(ok => {
@@ -226,14 +229,18 @@ export class QuoteDetailComponent implements OnInit {
         next: invoice => {
           this.convertedInvoice.set(invoice);
           this.acting.set(false);
-          this.snack.open(`Invoice ${invoice.number} created.`, 'Dismiss', { duration: 3000 });
+          this.snack.open(
+            this.t.instant('quotes.convert.successInvoice', { number: invoice.number }),
+            this.t.instant('common.dismiss'),
+            { duration: 3000 }
+          );
           this.router.navigate(['/invoices', invoice.id]);
         },
         error: err => {
           this.acting.set(false);
           this.snack.open(
-            extractErrorDetail(err, 'Could not convert quote.'),
-            'Dismiss',
+            extractErrorDetail(err, this.t.instant('quotes.convert.failed')),
+            this.t.instant('common.dismiss'),
             { duration: 4000 }
           );
         }
@@ -246,9 +253,10 @@ export class QuoteDetailComponent implements OnInit {
     if (!q) return;
     this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete quote',
-        message: `Delete quote ${q.number}? This cannot be undone.`,
-        confirmLabel: 'Delete',
+        title: this.t.instant('quotes.delete.title'),
+        message: this.t.instant('quotes.delete.message', { number: q.number }),
+        confirmLabel: this.t.instant('quotes.delete.confirm'),
+        cancelLabel: this.t.instant('common.cancel'),
         confirmColor: 'warn'
       }
     }).afterClosed().subscribe(ok => {
@@ -257,14 +265,18 @@ export class QuoteDetailComponent implements OnInit {
       this.quotes.remove(q.id).subscribe({
         next: () => {
           this.acting.set(false);
-          this.snack.open(`Quote ${q.number} deleted.`, 'Dismiss', { duration: 2500 });
+          this.snack.open(
+            this.t.instant('quotes.delete.success', { number: q.number }),
+            this.t.instant('common.dismiss'),
+            { duration: 2500 }
+          );
           this.router.navigate(['/quotes']);
         },
         error: err => {
           this.acting.set(false);
           this.snack.open(
-            extractErrorDetail(err, 'Could not delete quote.'),
-            'Dismiss',
+            extractErrorDetail(err, this.t.instant('quotes.delete.failed')),
+            this.t.instant('common.dismiss'),
             { duration: 4000 }
           );
         }
@@ -272,25 +284,22 @@ export class QuoteDetailComponent implements OnInit {
     });
   }
 
-  todo(label: string): void {
-    this.snack.open(`${label} — coming in next step`, 'Dismiss', { duration: 2000 });
-  }
-
   private confirmAndTransition(opts: {
     next: QuoteStatus;
-    title: string;
-    message: string;
-    confirmLabel: string;
+    titleKey: string;
+    messageKey: string;
+    confirmKey: string;
     confirmColor: 'primary' | 'accent' | 'warn';
-    successMessage: string;
+    successKey: string;
   }): void {
     const q = this.quote();
     if (!q) return;
     this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: opts.title,
-        message: opts.message,
-        confirmLabel: opts.confirmLabel,
+        title: this.t.instant(opts.titleKey),
+        message: this.t.instant(opts.messageKey),
+        confirmLabel: this.t.instant(opts.confirmKey),
+        cancelLabel: this.t.instant('common.cancel'),
         confirmColor: opts.confirmColor
       }
     }).afterClosed().subscribe(ok => {
@@ -300,13 +309,13 @@ export class QuoteDetailComponent implements OnInit {
         next: updated => {
           this.acting.set(false);
           this.quote.set(updated);
-          this.snack.open(opts.successMessage, 'Dismiss', { duration: 2500 });
+          this.snack.open(this.t.instant(opts.successKey), this.t.instant('common.dismiss'), { duration: 2500 });
         },
         error: err => {
           this.acting.set(false);
           this.snack.open(
-            extractErrorDetail(err, 'Could not update quote status.'),
-            'Dismiss',
+            extractErrorDetail(err, this.t.instant('quotes.statusUpdateFailed')),
+            this.t.instant('common.dismiss'),
             { duration: 4000 }
           );
         }

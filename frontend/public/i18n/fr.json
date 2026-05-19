@@ -1,0 +1,619 @@
+{
+  "common": {
+    "draft": "— Brouillon —",
+    "loading": "Chargement…",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "dismiss": "Fermer",
+    "ok": "OK",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "back": "Retour",
+    "search": "Rechercher",
+    "actions": "Actions",
+    "details": "Détails"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "clients": "Clients",
+    "products": "Produits",
+    "quotes": "Devis",
+    "invoices": "Factures",
+    "creditNotes": "Notes de crédit",
+    "logout": "Déconnexion"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English"
+  },
+  "auth": {
+    "fields": {
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "code": "Code de vérification"
+    },
+    "login": {
+      "subtitle": "Connectez-vous à votre compte",
+      "submit": "Se connecter",
+      "submitting": "Connexion…",
+      "twofaPrompt": "Saisissez le code à 6 chiffres envoyé sur votre téléphone.",
+      "verify": "Vérifier",
+      "verifying": "Vérification…",
+      "resend": "Renvoyer l'e-mail de vérification",
+      "resending": "Envoi…",
+      "resent": "E-mail de vérification envoyé. Consultez votre boîte de réception.",
+      "noAccount": "Pas encore de compte ?",
+      "signup": "S'inscrire"
+    },
+    "register": {
+      "subtitle": "Créez votre compte",
+      "subtitleSent": "Consultez votre e-mail",
+      "submit": "Créer le compte",
+      "submitting": "Création du compte…",
+      "alreadyHave": "Vous avez déjà un compte ?",
+      "signin": "Se connecter",
+      "invalidEmail": "Adresse e-mail invalide",
+      "passwordPattern": "Min. 8 caractères, une majuscule, une minuscule, un chiffre",
+      "sentTitle": "E-mail de vérification envoyé",
+      "sentBody": "Nous avons envoyé un lien de vérification à <strong>{{email}}</strong>. Cliquez sur le lien dans l'e-mail pour activer votre compte, puis connectez-vous.",
+      "goToSignIn": "Aller à la connexion",
+      "failed": "L'inscription a échoué. Veuillez réessayer."
+    },
+    "verify": {
+      "loading": "Vérification de votre e-mail…",
+      "successTitle": "E-mail vérifié !",
+      "successBody": "Votre compte est maintenant actif. Vous pouvez vous connecter.",
+      "goToSignIn": "Aller à la connexion",
+      "failedTitle": "Échec de la vérification",
+      "back": "Retour à la connexion",
+      "defaultError": "Le lien est invalide ou a expiré."
+    },
+    "errors": {
+      "invalidCredentials": "Identifiants invalides",
+      "invalidCode": "Code invalide",
+      "unverified": "Adresse e-mail non vérifiée.",
+      "resendFailed": "Impossible de renvoyer l'e-mail de vérification.",
+      "unexpected": "Réponse inattendue du serveur. Veuillez réessayer."
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "refresh": "Actualiser",
+    "welcome": {
+      "title": "Bienvenue dans InvoiceFlow",
+      "message": "Vous n'avez pas encore de données. Commencez par ajouter un client, puis créez votre premier devis ou facture.",
+      "addClient": "Ajouter un client",
+      "newQuote": "Nouveau devis",
+      "newInvoice": "Nouvelle facture"
+    },
+    "cards": {
+      "revenue": "Chiffre d'affaires",
+      "paidInvoices": "{{count}} facture(s) payée(s)",
+      "outstanding": "À encaisser",
+      "openInvoices": "{{count}} facture(s) ouverte(s)",
+      "overdue": "En retard",
+      "overdueInvoices": "{{count}} facture(s) en retard",
+      "clients": "Clients",
+      "openQuotes": "{{count}} devis ouvert(s)"
+    },
+    "recentInvoices": {
+      "title": "Factures récentes",
+      "empty": "Aucune facture pour le moment."
+    },
+    "recentPayments": {
+      "title": "Paiements récents",
+      "empty": "Aucun paiement enregistré."
+    },
+    "topOverdue": {
+      "title": "Principales factures en retard"
+    },
+    "actions": {
+      "newInvoice": "Nouvelle facture",
+      "newQuote": "Nouveau devis"
+    },
+    "table": {
+      "number": "Numéro",
+      "client": "Client",
+      "status": "Statut",
+      "amountDue": "Montant dû",
+      "date": "Date",
+      "invoice": "Facture",
+      "amount": "Montant",
+      "dueDate": "Date d'échéance",
+      "daysLate": "Jours de retard"
+    }
+  },
+  "clients": {
+    "title": "Clients",
+    "new": "Nouveau client",
+    "empty": "Aucun client pour le moment.",
+    "searchPlaceholder": "Nom ou e-mail",
+    "noMatch": "Aucun client ne correspond à « {{search}} ».",
+    "columns": {
+      "name": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "vat": "TVA",
+      "created": "Créé le"
+    },
+    "form": {
+      "newTitle": "Nouveau client",
+      "editTitle": "Modifier le client",
+      "name": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "vatNumber": "Numéro de TVA",
+      "billingAddress": "Adresse de facturation (optionnel)",
+      "street": "Rue",
+      "postalCode": "Code postal",
+      "city": "Ville",
+      "country": "Pays",
+      "notes": "Notes",
+      "create": "Créer",
+      "saving": "Enregistrement…",
+      "requiredName": "Le nom est obligatoire",
+      "requiredEmail": "L'e-mail est obligatoire",
+      "invalidEmail": "Adresse e-mail invalide",
+      "saveFailed": "Impossible d'enregistrer le client."
+    },
+    "details": {
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "vatNumber": "Numéro de TVA",
+      "created": "Créé le",
+      "billingAddress": "Adresse de facturation",
+      "notes": "Notes"
+    },
+    "deleteConfirm": {
+      "title": "Supprimer le client ?",
+      "message": "Si « {{name}} » a au moins un devis ou une facture, il sera archivé. Sinon, il sera supprimé définitivement.",
+      "confirm": "Supprimer"
+    },
+    "archived": "{{name}} archivé (documents liés conservés)",
+    "deleted": "{{name}} supprimé",
+    "deleteFailed": "Impossible de supprimer le client."
+  },
+  "products": {
+    "title": "Produits",
+    "new": "Nouveau produit",
+    "empty": "Aucun produit pour le moment.",
+    "searchPlaceholder": "Nom ou référence",
+    "noMatch": "Aucun produit ne correspond à « {{search}} ».",
+    "columns": {
+      "name": "Nom",
+      "reference": "Référence",
+      "unitPrice": "Prix unitaire",
+      "vat": "TVA",
+      "unit": "Unité",
+      "created": "Créé le"
+    },
+    "units": {
+      "hour": "Heure",
+      "day": "Jour",
+      "piece": "Pièce",
+      "forfait": "Forfait"
+    },
+    "form": {
+      "newTitle": "Nouveau produit",
+      "editTitle": "Modifier le produit",
+      "name": "Nom",
+      "reference": "Référence",
+      "description": "Description",
+      "unitPrice": "Prix unitaire (€)",
+      "vatRate": "Taux de TVA",
+      "unit": "Unité",
+      "create": "Créer",
+      "saving": "Enregistrement…",
+      "requiredName": "Le nom est obligatoire",
+      "requiredReference": "La référence est obligatoire",
+      "requiredUnitPrice": "Le prix unitaire est obligatoire",
+      "minUnitPrice": "Doit être supérieur à 0",
+      "saveFailed": "Impossible d'enregistrer le produit."
+    },
+    "details": {
+      "reference": "Référence",
+      "unitPrice": "Prix unitaire",
+      "vatRate": "Taux de TVA",
+      "unit": "Unité",
+      "created": "Créé le",
+      "description": "Description"
+    },
+    "deleteConfirm": {
+      "title": "Supprimer le produit ?",
+      "message": "Si « {{name}} » est utilisé dans un devis ou une facture, il sera archivé. Sinon, il sera supprimé définitivement.",
+      "confirm": "Supprimer"
+    },
+    "archived": "{{name}} archivé (utilisé dans devis/factures)",
+    "deleted": "{{name}} supprimé",
+    "deleteFailed": "Impossible de supprimer le produit."
+  },
+  "quotes": {
+    "title": "Devis",
+    "new": "Nouveau devis",
+    "empty": "Aucun devis pour le moment.",
+    "searchPlaceholder": "Numéro ou client",
+    "noMatchFilters": "Aucun devis ne correspond aux filtres actuels.",
+    "backToList": "Retour aux devis",
+    "linesHeading": "Lignes",
+    "notesHeading": "Notes",
+    "filters": {
+      "all": "Tous",
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "accepted": "Accepté",
+      "rejected": "Refusé",
+      "converted": "Converti"
+    },
+    "columns": {
+      "number": "Numéro",
+      "client": "Client",
+      "issueDate": "Date d'émission",
+      "status": "Statut",
+      "totalTtc": "Total TTC"
+    },
+    "status": {
+      "DRAFT": "Brouillon",
+      "SENT": "Envoyé",
+      "ACCEPTED": "Accepté",
+      "REJECTED": "Refusé",
+      "CONVERTED": "Converti"
+    },
+    "totals": {
+      "subtotalHt": "Sous-total HT",
+      "vat": "TVA",
+      "totalTtc": "Total TTC",
+      "ht": "HT"
+    },
+    "form": {
+      "newTitle": "Nouveau devis",
+      "editTitlePrefix": "Modifier ",
+      "fallbackTitle": "devis",
+      "client": "Client",
+      "requiredClient": "Le client est obligatoire",
+      "issueDate": "Date d'émission",
+      "expiryDate": "Date d'expiration",
+      "notes": "Notes",
+      "product": "Produit",
+      "adhoc": "— Ad hoc —",
+      "description": "Description",
+      "qty": "Qté",
+      "unitPrice": "Prix unitaire",
+      "vat": "TVA",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "remove": "Supprimer",
+      "addLine": "Ajouter une ligne",
+      "required": "Obligatoire",
+      "tooLong": "Trop long",
+      "saveChanges": "Enregistrer",
+      "create": "Créer le devis",
+      "saving": "Enregistrement…",
+      "correctErrors": "Veuillez corriger les erreurs indiquées.",
+      "saveFailed": "Impossible d'enregistrer le devis.",
+      "notFound": "Devis introuvable.",
+      "onlyDraftEditable": "Seuls les devis en BROUILLON peuvent être modifiés.",
+      "updated": "Devis {{number}} mis à jour",
+      "created": "Devis {{number}} créé"
+    },
+    "detail": {
+      "missingId": "Identifiant de devis manquant.",
+      "notFound": "Devis introuvable.",
+      "client": "Client",
+      "issue": "Émission",
+      "expiry": "Expiration",
+      "lineDescription": "Description",
+      "lineQty": "Qté",
+      "lineUnitPrice": "Prix unitaire",
+      "lineVat": "TVA",
+      "lineTotalHt": "Total ligne HT",
+      "edit": "Modifier",
+      "send": "Envoyer",
+      "delete": "Supprimer",
+      "markAccepted": "Marquer accepté",
+      "markRejected": "Marquer refusé",
+      "convertToInvoice": "Convertir en facture",
+      "convertedTo": "Converti en facture {{number}}.",
+      "convertedFallback": "Converti en facture."
+    },
+    "send": {
+      "title": "Envoyer le devis",
+      "message": "Une fois envoyé, le devis devient en lecture seule et son statut passe à ENVOYÉ.",
+      "confirm": "Envoyer",
+      "success": "Devis marqué comme envoyé."
+    },
+    "accept": {
+      "title": "Marquer le devis accepté",
+      "message": "Le client a accepté ce devis. Vous pourrez ensuite le convertir en facture.",
+      "confirm": "Marquer accepté",
+      "success": "Devis marqué comme accepté."
+    },
+    "reject": {
+      "title": "Marquer le devis refusé",
+      "message": "Le client a refusé ce devis. Cette action est définitive — le devis ne peut être ni rouvert ni modifié.",
+      "confirm": "Marquer refusé",
+      "success": "Devis marqué comme refusé."
+    },
+    "convert": {
+      "title": "Convertir en facture",
+      "message": "Une nouvelle facture en BROUILLON sera créée depuis ce devis et le devis sera marqué CONVERTI. Cette action est irréversible.",
+      "confirm": "Convertir",
+      "successInvoice": "Facture {{number}} créée.",
+      "failed": "Impossible de convertir le devis."
+    },
+    "delete": {
+      "title": "Supprimer le devis",
+      "message": "Supprimer le devis {{number}} ? Cette action est irréversible.",
+      "confirm": "Supprimer",
+      "success": "Devis {{number}} supprimé.",
+      "failed": "Impossible de supprimer le devis."
+    },
+    "statusUpdateFailed": "Impossible de mettre à jour le statut du devis."
+  },
+  "invoices": {
+    "title": "Factures",
+    "new": "Nouvelle facture",
+    "empty": "Aucune facture pour le moment.",
+    "searchPlaceholder": "Numéro ou client",
+    "noMatchFilters": "Aucune facture ne correspond aux filtres actuels.",
+    "backToList": "Retour aux factures",
+    "linesHeading": "Lignes",
+    "paymentsHeading": "Paiements",
+    "noPayments": "Aucun paiement enregistré.",
+    "draftInvoice": "Facture brouillon",
+    "filters": {
+      "all": "Toutes",
+      "draft": "Brouillon",
+      "sent": "Envoyée",
+      "partiallyPaid": "Partiellement payée",
+      "paid": "Payée",
+      "overdue": "En retard",
+      "cancelled": "Annulée"
+    },
+    "columns": {
+      "number": "Numéro",
+      "client": "Client",
+      "issueDate": "Date d'émission",
+      "dueDate": "Date d'échéance",
+      "status": "Statut",
+      "totalTtc": "Total TTC",
+      "amountDue": "Montant dû"
+    },
+    "status": {
+      "DRAFT": "Brouillon",
+      "SENT": "Envoyée",
+      "PARTIALLY_PAID": "Partiellement payée",
+      "PAID": "Payée",
+      "OVERDUE": "En retard",
+      "CANCELLED": "Annulée"
+    },
+    "totals": {
+      "subtotalHt": "Sous-total HT",
+      "vat": "TVA",
+      "totalTtc": "Total TTC",
+      "ht": "HT",
+      "paid": "Payé",
+      "creditNote": "Note de crédit",
+      "amountDue": "Montant dû",
+      "netAmountDue": "Montant net dû"
+    },
+    "form": {
+      "newTitle": "Nouvelle facture",
+      "editTitlePrefix": "Modifier ",
+      "fallbackTitle": "facture",
+      "client": "Client",
+      "requiredClient": "Le client est obligatoire",
+      "issueDate": "Date d'émission",
+      "dueDate": "Date d'échéance",
+      "paymentTerms": "Conditions de paiement",
+      "defaultPaymentTerms": "Paiement à 30 jours, par virement bancaire.",
+      "product": "Produit",
+      "adhoc": "— Ad hoc —",
+      "description": "Description",
+      "qty": "Qté",
+      "unitPrice": "Prix unitaire",
+      "vat": "TVA",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "remove": "Supprimer",
+      "addLine": "Ajouter une ligne",
+      "required": "Obligatoire",
+      "tooLong": "Trop long",
+      "errorGtZero": "Doit être supérieur à 0",
+      "errorGteZero": "Doit être ≥ 0",
+      "saveChanges": "Enregistrer",
+      "create": "Créer la facture",
+      "saving": "Enregistrement…",
+      "correctErrors": "Veuillez corriger les erreurs indiquées.",
+      "saveFailed": "Impossible d'enregistrer la facture.",
+      "notFound": "Facture introuvable.",
+      "onlyDraftEditable": "Seules les factures en BROUILLON peuvent être modifiées.",
+      "updated": "Facture {{number}} mise à jour",
+      "draftUpdated": "Facture (brouillon) mise à jour",
+      "draftCreated": "Brouillon de facture créé"
+    },
+    "detail": {
+      "missingId": "Identifiant de facture manquant.",
+      "notFound": "Facture introuvable.",
+      "client": "Client",
+      "issue": "Émission",
+      "due": "Échéance",
+      "sent": "Envoyée",
+      "sentTo": "à {{email}}",
+      "createdFromQuote": "Créée à partir du devis — ouvrir",
+      "creditNoteLink": "Note de crédit {{label}} — ouvrir",
+      "creditNoteDraft": "— brouillon",
+      "activeStripeLink": "Lien de paiement Stripe actif",
+      "copyLink": "Copier le lien",
+      "linkCopied": "Lien copié.",
+      "copyFailed": "Impossible de copier le lien.",
+      "stalePaymentLink": "Le lien de paiement Stripe a été invalidé suite à l'émission d'une note de crédit. Le montant restant dû doit être encaissé manuellement (virement, espèces, etc.) puis enregistré ici.",
+      "lineDescription": "Description",
+      "lineQty": "Qté",
+      "lineUnitPrice": "Prix unitaire",
+      "lineVat": "TVA",
+      "lineTotalHt": "Total ligne HT",
+      "paymentDate": "Date",
+      "paymentAmount": "Montant",
+      "paymentMethod": "Méthode",
+      "paymentNotes": "Notes",
+      "fullyPaid": "Entièrement payée",
+      "cancelled": "Annulée — aucune action disponible.",
+      "pdf": "PDF",
+      "edit": "Modifier",
+      "send": "Envoyer",
+      "delete": "Supprimer",
+      "recordPayment": "Enregistrer un paiement",
+      "markOverdue": "Marquer en retard",
+      "creditNote": "Note de crédit"
+    },
+    "send": {
+      "noEmail": "Ce client n'a pas d'adresse e-mail.",
+      "title": "Envoyer la facture",
+      "message": "Envoyer cette facture par e-mail à {{email}} ? Un numéro de facture séquentiel sera attribué maintenant et la facture deviendra en lecture seule. Un lien de paiement Stripe sera généré et inclus dans l'e-mail si possible.",
+      "confirm": "Envoyer",
+      "success": "Facture {{number}} envoyée à {{email}}.",
+      "failed": "Impossible d'envoyer la facture."
+    },
+    "markOverdue": {
+      "title": "Marquer la facture en retard",
+      "message": "La date d'échéance est dépassée et la facture est impayée. La marquer en retard est informatif — vous pourrez toujours enregistrer des paiements ensuite.",
+      "confirm": "Marquer en retard",
+      "success": "Facture marquée en retard."
+    },
+    "pdf": {
+      "failed": "Impossible de télécharger le PDF.",
+      "draftFilenamePrefix": "brouillon"
+    },
+    "recordPayment": {
+      "nothingDue": "Plus rien à payer sur cette facture.",
+      "success": "Paiement enregistré.",
+      "failed": "Impossible d'enregistrer le paiement."
+    },
+    "delete": {
+      "title": "Supprimer la facture",
+      "messageWithNumber": "Supprimer la facture {{number}} ? Cette action est irréversible.",
+      "messageDraft": "Supprimer ce brouillon de facture ? Cette action est irréversible.",
+      "confirm": "Supprimer",
+      "successWithNumber": "Facture {{number}} supprimée.",
+      "successDraft": "Brouillon de facture supprimé.",
+      "failed": "Impossible de supprimer la facture."
+    },
+    "statusUpdateFailed": "Impossible de mettre à jour le statut de la facture.",
+    "creditNoteShortcut": {
+      "created": "Brouillon de note de crédit créé.",
+      "createFailed": "Impossible de créer la note de crédit."
+    },
+    "payment": {
+      "title": "Enregistrer un paiement — {{number}}",
+      "amountDueLabel": "Montant dû :",
+      "amount": "Montant (€)",
+      "method": "Méthode",
+      "date": "Date de réception",
+      "notes": "Notes (optionnel)",
+      "submit": "Enregistrer le paiement",
+      "errorRequired": "Obligatoire",
+      "errorMin": "Doit être supérieur à 0",
+      "errorMax": "Ne peut pas dépasser le montant dû",
+      "methods": {
+        "Bank transfer": "Virement bancaire",
+        "Cash": "Espèces",
+        "Card": "Carte",
+        "Cheque": "Chèque",
+        "Other": "Autre"
+      }
+    }
+  },
+  "creditNotes": {
+    "title": "Notes de crédit",
+    "empty": "Aucune note de crédit pour le moment.",
+    "emptyHint": "Ouvrez une facture et utilisez « Créer une note de crédit ».",
+    "searchPlaceholder": "Numéro, facture ou client",
+    "noMatchFilters": "Aucune note de crédit ne correspond aux filtres actuels.",
+    "backToList": "Retour aux notes de crédit",
+    "draftTitle": "Note de crédit (brouillon)",
+    "linesHeading": "Lignes",
+    "reasonHeading": "Motif",
+    "originalInvoice": "Facture d'origine — {{label}}",
+    "originalInvoiceOpen": "ouvrir",
+    "filters": {
+      "all": "Toutes",
+      "draft": "Brouillon",
+      "issued": "Émise"
+    },
+    "status": {
+      "DRAFT": "Brouillon",
+      "ISSUED": "Émise"
+    },
+    "columns": {
+      "number": "Numéro",
+      "invoice": "Facture",
+      "client": "Client",
+      "issueDate": "Date d'émission",
+      "status": "Statut",
+      "totalTtc": "Total TTC"
+    },
+    "totals": {
+      "subtotalHt": "Sous-total HT",
+      "vat": "TVA",
+      "totalTtc": "Total TTC"
+    },
+    "detail": {
+      "missingId": "Identifiant de note de crédit manquant.",
+      "notFound": "Note de crédit introuvable.",
+      "client": "Client",
+      "issue": "Émission",
+      "issued": "Émise le",
+      "pdf": "PDF",
+      "issueAction": "Émettre",
+      "delete": "Supprimer",
+      "lineDescription": "Description",
+      "lineQty": "Qté",
+      "lineUnitPrice": "Prix unitaire",
+      "lineVat": "TVA",
+      "lineTotalHt": "Total ligne HT"
+    },
+    "issue": {
+      "title": "Émettre la note de crédit",
+      "message": "Un numéro séquentiel AV-AAAA-NNN sera attribué maintenant. La note de crédit deviendra en lecture seule.",
+      "confirm": "Émettre",
+      "success": "Note de crédit {{number}} émise.",
+      "failed": "Impossible d'émettre la note de crédit."
+    },
+    "delete": {
+      "title": "Supprimer la note de crédit",
+      "message": "Supprimer ce brouillon de note de crédit ? Cette action est irréversible.",
+      "confirm": "Supprimer",
+      "success": "Note de crédit supprimée.",
+      "failed": "Impossible de supprimer la note de crédit."
+    },
+    "pdf": {
+      "failed": "Impossible de télécharger le PDF.",
+      "draftFilenamePrefix": "brouillon-av"
+    },
+    "form": {
+      "title": "Note de crédit pour {{number}}",
+      "draftInvoice": "facture brouillon",
+      "intro": "Sélectionnez les lignes à créditer et la quantité. Chaque ligne est plafonnée à la quantité facturée d'origine.",
+      "credit": "Créditer",
+      "description": "Description",
+      "remaining": "Restant",
+      "unitPrice": "Prix unitaire",
+      "creditQty": "Qté à créditer",
+      "alreadyCredited": "Déjà crédité : {{credited}} sur {{total}}",
+      "creditTotal": "Total à créditer TTC : -{{amount}} €",
+      "issueDate": "Date d'émission",
+      "reason": "Motif",
+      "reasonPlaceholder": "ex. Quantité erronée facturée",
+      "required": "Obligatoire",
+      "noLinesSelected": "Sélectionnez au moins une ligne avec une quantité supérieure à 0.",
+      "createDraft": "Créer le brouillon"
+    }
+  }
+}

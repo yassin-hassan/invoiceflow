@@ -3,17 +3,21 @@ package com.example.invoiceflow.auth;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final MessageSource messageSource;
 
     @Value("${app.mail.from}")
     private String from;
@@ -21,30 +25,20 @@ public class EmailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
-    public void sendVerificationEmail(String to, String token) {
+    public void sendVerificationEmail(String to, String token, Locale locale) {
+        Locale l = nonNull(locale);
         String link = baseUrl + "/verify?token=" + token;
-        String html = """
-                <p>Bonjour,</p>
-                <p>Merci de vous être inscrit sur <strong>InvoiceFlow</strong>.</p>
-                <p>Veuillez confirmer votre adresse email en cliquant sur le lien ci-dessous :</p>
-                <p><a href="%s">Confirmer mon email</a></p>
-                <p>Ce lien est valable 24 heures.</p>
-                <p>Si vous n'avez pas créé de compte, ignorez cet email.</p>
-                """.formatted(link);
-        send(to, "Confirmez votre adresse email — InvoiceFlow", html);
+        String subject = messageSource.getMessage("email.verification.subject", null, l);
+        String html = messageSource.getMessage("email.verification.body", new Object[]{link}, l);
+        send(to, subject, html);
     }
 
-    public void sendPasswordResetEmail(String to, String token) {
+    public void sendPasswordResetEmail(String to, String token, Locale locale) {
+        Locale l = nonNull(locale);
         String link = baseUrl + "/api/auth/reset-password?token=" + token;
-        String html = """
-                <p>Bonjour,</p>
-                <p>Vous avez demandé à réinitialiser votre mot de passe sur <strong>InvoiceFlow</strong>.</p>
-                <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
-                <p><a href="%s">Réinitialiser mon mot de passe</a></p>
-                <p>Ce lien est valable 1 heure.</p>
-                <p>Si vous n'avez pas fait cette demande, ignorez cet email.</p>
-                """.formatted(link);
-        send(to, "Réinitialisation de votre mot de passe — InvoiceFlow", html);
+        String subject = messageSource.getMessage("email.reset.subject", null, l);
+        String html = messageSource.getMessage("email.reset.body", new Object[]{link}, l);
+        send(to, subject, html);
     }
 
     private void send(String to, String subject, String htmlBody) {
@@ -76,5 +70,9 @@ public class EmailService {
         } catch (MessagingException | MailException ex) {
             throw new IllegalStateException("Failed to send invoice email to " + to, ex);
         }
+    }
+
+    private static Locale nonNull(Locale locale) {
+        return locale != null ? locale : Locale.FRENCH;
     }
 }

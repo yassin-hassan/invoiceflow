@@ -6,6 +6,7 @@ import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.auth.TwoFactorVerificationRepository;
 import com.example.invoiceflow.auth.dto.Disable2faRequest;
 import com.example.invoiceflow.auth.dto.Enable2faRequest;
+import com.example.invoiceflow.config.I18nConfig;
 import com.example.invoiceflow.exception.EmailAlreadyExistsException;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
 import com.example.invoiceflow.storage.StorageService;
@@ -53,7 +54,7 @@ public class UserService {
 
         String token = UUID.randomUUID().toString();
         verificationRepository.save(new AccountVerification(user, token, LocalDateTime.now().plusHours(24)));
-        emailService.sendVerificationEmail(email, token);
+        emailService.sendVerificationEmail(email, token, I18nConfig.toLocale(user.getPreferredLanguage()));
 
         return user;
     }

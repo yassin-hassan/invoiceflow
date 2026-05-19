@@ -1,10 +1,11 @@
-import { Component, Inject, signal } from '@angular/core';
+import { Component, Inject, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ClientsService } from './clients.service';
 import { Client, CreateClientRequest, UpdateClientRequest } from './client.model';
 import { extractErrorDetail, extractFieldErrors } from '../../core/utils/http-errors';
@@ -18,63 +19,64 @@ export interface ClientFormDialogData {
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule,
-    MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule
+    MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule,
+    TranslateModule
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.client ? 'Edit client' : 'New client' }}</h2>
+    <h2 mat-dialog-title>{{ (data.client ? 'clients.form.editTitle' : 'clients.form.newTitle') | translate }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" (ngSubmit)="onSubmit()" style="display:flex; flex-direction:column; gap:8px; min-width:480px;">
         <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
+          <mat-label>{{ 'clients.form.name' | translate }}</mat-label>
           <input matInput formControlName="name" />
-          <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
+          <mat-error *ngIf="form.get('name')?.hasError('required')">{{ 'clients.form.requiredName' | translate }}</mat-error>
           <mat-error *ngIf="serverErrors()['name']">{{ serverErrors()['name'] }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
+          <mat-label>{{ 'clients.form.email' | translate }}</mat-label>
           <input matInput formControlName="email" type="email" />
-          <mat-error *ngIf="form.get('email')?.hasError('required')">Email is required</mat-error>
-          <mat-error *ngIf="form.get('email')?.hasError('email')">Invalid email address</mat-error>
+          <mat-error *ngIf="form.get('email')?.hasError('required')">{{ 'clients.form.requiredEmail' | translate }}</mat-error>
+          <mat-error *ngIf="form.get('email')?.hasError('email')">{{ 'clients.form.invalidEmail' | translate }}</mat-error>
           <mat-error *ngIf="serverErrors()['email']">{{ serverErrors()['email'] }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Phone</mat-label>
+          <mat-label>{{ 'clients.form.phone' | translate }}</mat-label>
           <input matInput formControlName="phone" />
           <mat-error *ngIf="serverErrors()['phone']">{{ serverErrors()['phone'] }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>VAT number</mat-label>
+          <mat-label>{{ 'clients.form.vatNumber' | translate }}</mat-label>
           <input matInput formControlName="vatNumber" />
           <mat-error *ngIf="serverErrors()['vatNumber']">{{ serverErrors()['vatNumber'] }}</mat-error>
         </mat-form-field>
 
         <div formGroupName="billingAddress" style="display:flex; flex-direction:column; gap:8px;">
-          <h3 style="margin:8px 0 0; font-size:0.95rem; color:#555;">Billing address (optional)</h3>
+          <h3 style="margin:8px 0 0; font-size:0.95rem; color:#555;">{{ 'clients.form.billingAddress' | translate }}</h3>
           <mat-form-field appearance="outline">
-            <mat-label>Street</mat-label>
+            <mat-label>{{ 'clients.form.street' | translate }}</mat-label>
             <input matInput formControlName="street" />
           </mat-form-field>
           <div style="display:flex; gap:8px;">
             <mat-form-field appearance="outline" style="flex:1;">
-              <mat-label>Postal code</mat-label>
+              <mat-label>{{ 'clients.form.postalCode' | translate }}</mat-label>
               <input matInput formControlName="postalCode" />
             </mat-form-field>
             <mat-form-field appearance="outline" style="flex:2;">
-              <mat-label>City</mat-label>
+              <mat-label>{{ 'clients.form.city' | translate }}</mat-label>
               <input matInput formControlName="city" />
             </mat-form-field>
           </div>
           <mat-form-field appearance="outline">
-            <mat-label>Country</mat-label>
+            <mat-label>{{ 'clients.form.country' | translate }}</mat-label>
             <input matInput formControlName="country" />
           </mat-form-field>
         </div>
 
         <mat-form-field appearance="outline">
-          <mat-label>Notes</mat-label>
+          <mat-label>{{ 'clients.form.notes' | translate }}</mat-label>
           <textarea matInput rows="3" formControlName="notes"></textarea>
         </mat-form-field>
 
@@ -82,14 +84,16 @@ export interface ClientFormDialogData {
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()" [disabled]="loading()">Cancel</button>
+      <button mat-button type="button" (click)="ref.close()" [disabled]="loading()">{{ 'common.cancel' | translate }}</button>
       <button mat-raised-button color="primary" type="button" (click)="onSubmit()" [disabled]="loading()">
-        {{ loading() ? 'Saving...' : (data.client ? 'Save' : 'Create') }}
+        {{ (loading() ? 'clients.form.saving' : (data.client ? 'common.save' : 'clients.form.create')) | translate }}
       </button>
     </mat-dialog-actions>
   `
 })
 export class ClientFormDialogComponent {
+  private t = inject(TranslateService);
+
   form: FormGroup;
   loading = signal(false);
   error = signal('');
@@ -150,7 +154,7 @@ export class ClientFormDialogComponent {
             this.form.get(name)?.markAsTouched();
           }
         } else {
-          this.error.set(extractErrorDetail(err, 'Could not save client.'));
+          this.error.set(extractErrorDetail(err, this.t.instant('clients.form.saveFailed')));
         }
       }
     });

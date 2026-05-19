@@ -1,4 +1,4 @@
-import { Component, Inject, signal } from '@angular/core';
+import { Component, Inject, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ProductsService } from './products.service';
 import { Product, CreateProductRequest, UpdateProductRequest } from './product.model';
 import { extractErrorDetail, extractFieldErrors } from '../../core/utils/http-errors';
@@ -22,51 +23,52 @@ const UNITS = ['hour', 'day', 'piece', 'forfait'];
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule,
-    MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule
+    MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule,
+    TranslateModule
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.product ? 'Edit product' : 'New product' }}</h2>
+    <h2 mat-dialog-title>{{ (data.product ? 'products.form.editTitle' : 'products.form.newTitle') | translate }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" (ngSubmit)="onSubmit()" style="display:flex; flex-direction:column; gap:8px; min-width:480px;">
         <mat-form-field appearance="outline">
-          <mat-label>Name</mat-label>
+          <mat-label>{{ 'products.form.name' | translate }}</mat-label>
           <input matInput formControlName="name" />
-          <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
+          <mat-error *ngIf="form.get('name')?.hasError('required')">{{ 'products.form.requiredName' | translate }}</mat-error>
           <mat-error *ngIf="serverErrors()['name']">{{ serverErrors()['name'] }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Reference</mat-label>
+          <mat-label>{{ 'products.form.reference' | translate }}</mat-label>
           <input matInput formControlName="reference" />
-          <mat-error *ngIf="form.get('reference')?.hasError('required')">Reference is required</mat-error>
+          <mat-error *ngIf="form.get('reference')?.hasError('required')">{{ 'products.form.requiredReference' | translate }}</mat-error>
           <mat-error *ngIf="serverErrors()['reference']">{{ serverErrors()['reference'] }}</mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Description</mat-label>
+          <mat-label>{{ 'products.form.description' | translate }}</mat-label>
           <textarea matInput rows="2" formControlName="description"></textarea>
         </mat-form-field>
 
         <div style="display:flex; gap:8px;">
           <mat-form-field appearance="outline" style="flex:1;">
-            <mat-label>Unit price (€)</mat-label>
+            <mat-label>{{ 'products.form.unitPrice' | translate }}</mat-label>
             <input matInput type="number" step="0.01" min="0" formControlName="unitPrice" />
-            <mat-error *ngIf="form.get('unitPrice')?.hasError('required')">Unit price is required</mat-error>
-            <mat-error *ngIf="form.get('unitPrice')?.hasError('min')">Must be greater than 0</mat-error>
+            <mat-error *ngIf="form.get('unitPrice')?.hasError('required')">{{ 'products.form.requiredUnitPrice' | translate }}</mat-error>
+            <mat-error *ngIf="form.get('unitPrice')?.hasError('min')">{{ 'products.form.minUnitPrice' | translate }}</mat-error>
             <mat-error *ngIf="serverErrors()['unitPrice']">{{ serverErrors()['unitPrice'] }}</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" style="flex:1;">
-            <mat-label>VAT rate</mat-label>
+            <mat-label>{{ 'products.form.vatRate' | translate }}</mat-label>
             <mat-select formControlName="vatRate">
               <mat-option *ngFor="let r of vatRates" [value]="r">{{ r }}%</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline" style="flex:1;">
-            <mat-label>Unit</mat-label>
+            <mat-label>{{ 'products.form.unit' | translate }}</mat-label>
             <mat-select formControlName="unit">
-              <mat-option *ngFor="let u of units" [value]="u">{{ u }}</mat-option>
+              <mat-option *ngFor="let u of units" [value]="u">{{ ('products.units.' + u) | translate }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
@@ -75,14 +77,16 @@ const UNITS = ['hour', 'day', 'piece', 'forfait'];
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()" [disabled]="loading()">Cancel</button>
+      <button mat-button type="button" (click)="ref.close()" [disabled]="loading()">{{ 'common.cancel' | translate }}</button>
       <button mat-raised-button color="primary" type="button" (click)="onSubmit()" [disabled]="loading()">
-        {{ loading() ? 'Saving...' : (data.product ? 'Save' : 'Create') }}
+        {{ (loading() ? 'products.form.saving' : (data.product ? 'common.save' : 'products.form.create')) | translate }}
       </button>
     </mat-dialog-actions>
   `
 })
 export class ProductFormDialogComponent {
+  private t = inject(TranslateService);
+
   form: FormGroup;
   loading = signal(false);
   error = signal('');
@@ -141,7 +145,7 @@ export class ProductFormDialogComponent {
             this.form.get(name)?.markAsTouched();
           }
         } else {
-          this.error.set(extractErrorDetail(err, 'Could not save product.'));
+          this.error.set(extractErrorDetail(err, this.t.instant('products.form.saveFailed')));
         }
       }
     });

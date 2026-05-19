@@ -3,6 +3,7 @@ package com.example.invoiceflow.auth;
 import com.example.invoiceflow.auth.dto.LoginRequest;
 import com.example.invoiceflow.auth.dto.LoginResponse;
 import com.example.invoiceflow.auth.dto.TwoFactorVerifyRequest;
+import com.example.invoiceflow.config.I18nConfig;
 import com.example.invoiceflow.exception.AccountLockedException;
 import com.example.invoiceflow.exception.EmailNotVerifiedException;
 import com.example.invoiceflow.security.JwtService;
@@ -112,7 +113,7 @@ public class AuthService {
             verificationRepository.deleteByUserId(user.getId());
             String token = UUID.randomUUID().toString();
             verificationRepository.save(new AccountVerification(user, token, LocalDateTime.now().plusHours(24)));
-            emailService.sendVerificationEmail(user.getEmail(), token);
+            emailService.sendVerificationEmail(user.getEmail(), token, I18nConfig.toLocale(user.getPreferredLanguage()));
         });
     }
 
@@ -122,7 +123,7 @@ public class AuthService {
             passwordResetRepository.deleteByUserId(user.getId());
             String token = UUID.randomUUID().toString();
             passwordResetRepository.save(new PasswordResetVerification(user, token, LocalDateTime.now().plusHours(1)));
-            emailService.sendPasswordResetEmail(user.getEmail(), token);
+            emailService.sendPasswordResetEmail(user.getEmail(), token, I18nConfig.toLocale(user.getPreferredLanguage()));
         });
     }
 

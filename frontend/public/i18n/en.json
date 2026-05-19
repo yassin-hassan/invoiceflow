@@ -1,0 +1,619 @@
+{
+  "common": {
+    "draft": "— Draft —",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "dismiss": "Dismiss",
+    "ok": "OK",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "search": "Search",
+    "actions": "Actions",
+    "details": "Details"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "clients": "Clients",
+    "products": "Products",
+    "quotes": "Quotes",
+    "invoices": "Invoices",
+    "creditNotes": "Credit notes",
+    "logout": "Logout"
+  },
+  "language": {
+    "label": "Language",
+    "fr": "Français",
+    "en": "English"
+  },
+  "auth": {
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "code": "Verification code"
+    },
+    "login": {
+      "subtitle": "Sign in to your account",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "twofaPrompt": "Enter the 6-digit code sent to your phone.",
+      "verify": "Verify",
+      "verifying": "Verifying…",
+      "resend": "Resend verification email",
+      "resending": "Sending…",
+      "resent": "Verification email sent. Check your inbox.",
+      "noAccount": "No account yet?",
+      "signup": "Sign up"
+    },
+    "register": {
+      "subtitle": "Create your account",
+      "subtitleSent": "Check your email",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "alreadyHave": "Already have an account?",
+      "signin": "Sign in",
+      "invalidEmail": "Invalid email address",
+      "passwordPattern": "Min 8 characters, one uppercase, one lowercase, one digit",
+      "sentTitle": "Verification email sent",
+      "sentBody": "We sent a verification link to <strong>{{email}}</strong>. Click the link in the email to activate your account, then sign in.",
+      "goToSignIn": "Go to sign in",
+      "failed": "Registration failed. Please try again."
+    },
+    "verify": {
+      "loading": "Verifying your email…",
+      "successTitle": "Email verified!",
+      "successBody": "Your account is now active. You can sign in.",
+      "goToSignIn": "Go to Sign in",
+      "failedTitle": "Verification failed",
+      "back": "Back to Sign in",
+      "defaultError": "The link is invalid or has expired."
+    },
+    "errors": {
+      "invalidCredentials": "Invalid credentials",
+      "invalidCode": "Invalid code",
+      "unverified": "Email address not verified.",
+      "resendFailed": "Could not resend verification email.",
+      "unexpected": "Unexpected response from server. Please try again."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "refresh": "Refresh",
+    "welcome": {
+      "title": "Welcome to InvoiceFlow",
+      "message": "You don't have any data yet. Start by adding a client, then create your first quote or invoice.",
+      "addClient": "Add a client",
+      "newQuote": "New quote",
+      "newInvoice": "New invoice"
+    },
+    "cards": {
+      "revenue": "Revenue",
+      "paidInvoices": "{{count}} paid invoice(s)",
+      "outstanding": "Outstanding",
+      "openInvoices": "{{count}} open invoice(s)",
+      "overdue": "Overdue",
+      "overdueInvoices": "{{count}} overdue invoice(s)",
+      "clients": "Clients",
+      "openQuotes": "{{count}} open quote(s)"
+    },
+    "recentInvoices": {
+      "title": "Recent invoices",
+      "empty": "No invoices yet."
+    },
+    "recentPayments": {
+      "title": "Recent payments",
+      "empty": "No payments recorded yet."
+    },
+    "topOverdue": {
+      "title": "Top overdue invoices"
+    },
+    "actions": {
+      "newInvoice": "New invoice",
+      "newQuote": "New quote"
+    },
+    "table": {
+      "number": "Number",
+      "client": "Client",
+      "status": "Status",
+      "amountDue": "Amount due",
+      "date": "Date",
+      "invoice": "Invoice",
+      "amount": "Amount",
+      "dueDate": "Due date",
+      "daysLate": "Days late"
+    }
+  },
+  "clients": {
+    "title": "Clients",
+    "new": "New client",
+    "empty": "No clients yet.",
+    "searchPlaceholder": "Name or email",
+    "noMatch": "No clients match \"{{search}}\".",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "vat": "VAT",
+      "created": "Created"
+    },
+    "form": {
+      "newTitle": "New client",
+      "editTitle": "Edit client",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "vatNumber": "VAT number",
+      "billingAddress": "Billing address (optional)",
+      "street": "Street",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country",
+      "notes": "Notes",
+      "create": "Create",
+      "saving": "Saving…",
+      "requiredName": "Name is required",
+      "requiredEmail": "Email is required",
+      "invalidEmail": "Invalid email address",
+      "saveFailed": "Could not save client."
+    },
+    "details": {
+      "email": "Email",
+      "phone": "Phone",
+      "vatNumber": "VAT number",
+      "created": "Created",
+      "billingAddress": "Billing address",
+      "notes": "Notes"
+    },
+    "deleteConfirm": {
+      "title": "Delete client?",
+      "message": "If \"{{name}}\" has any quote or invoice, they'll be archived. Otherwise, they'll be deleted permanently.",
+      "confirm": "Delete"
+    },
+    "archived": "{{name}} archived (linked documents kept)",
+    "deleted": "{{name}} deleted",
+    "deleteFailed": "Could not delete client."
+  },
+  "products": {
+    "title": "Products",
+    "new": "New product",
+    "empty": "No products yet.",
+    "searchPlaceholder": "Name or reference",
+    "noMatch": "No products match \"{{search}}\".",
+    "columns": {
+      "name": "Name",
+      "reference": "Reference",
+      "unitPrice": "Unit price",
+      "vat": "VAT",
+      "unit": "Unit",
+      "created": "Created"
+    },
+    "units": {
+      "hour": "Hour",
+      "day": "Day",
+      "piece": "Piece",
+      "forfait": "Lump sum"
+    },
+    "form": {
+      "newTitle": "New product",
+      "editTitle": "Edit product",
+      "name": "Name",
+      "reference": "Reference",
+      "description": "Description",
+      "unitPrice": "Unit price (€)",
+      "vatRate": "VAT rate",
+      "unit": "Unit",
+      "create": "Create",
+      "saving": "Saving…",
+      "requiredName": "Name is required",
+      "requiredReference": "Reference is required",
+      "requiredUnitPrice": "Unit price is required",
+      "minUnitPrice": "Must be greater than 0",
+      "saveFailed": "Could not save product."
+    },
+    "details": {
+      "reference": "Reference",
+      "unitPrice": "Unit price",
+      "vatRate": "VAT rate",
+      "unit": "Unit",
+      "created": "Created",
+      "description": "Description"
+    },
+    "deleteConfirm": {
+      "title": "Delete product?",
+      "message": "If \"{{name}}\" is used in any quote or invoice, it'll be archived. Otherwise, it'll be deleted permanently.",
+      "confirm": "Delete"
+    },
+    "archived": "{{name}} archived (used in quotes/invoices)",
+    "deleted": "{{name}} deleted",
+    "deleteFailed": "Could not delete product."
+  },
+  "quotes": {
+    "title": "Quotes",
+    "new": "New quote",
+    "empty": "No quotes yet.",
+    "searchPlaceholder": "Number or client",
+    "noMatchFilters": "No quotes match the current filters.",
+    "backToList": "Back to quotes",
+    "linesHeading": "Lines",
+    "notesHeading": "Notes",
+    "filters": {
+      "all": "All",
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "converted": "Converted"
+    },
+    "columns": {
+      "number": "Number",
+      "client": "Client",
+      "issueDate": "Issue date",
+      "status": "Status",
+      "totalTtc": "Total incl. VAT"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected",
+      "CONVERTED": "Converted"
+    },
+    "totals": {
+      "subtotalHt": "Subtotal excl. VAT",
+      "vat": "VAT",
+      "totalTtc": "Total incl. VAT",
+      "ht": "Excl. VAT"
+    },
+    "form": {
+      "newTitle": "New quote",
+      "editTitlePrefix": "Edit ",
+      "fallbackTitle": "quote",
+      "client": "Client",
+      "requiredClient": "Client is required",
+      "issueDate": "Issue date",
+      "expiryDate": "Expiry date",
+      "notes": "Notes",
+      "product": "Product",
+      "adhoc": "— Ad-hoc —",
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "vat": "VAT",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove",
+      "addLine": "Add line",
+      "required": "Required",
+      "tooLong": "Too long",
+      "saveChanges": "Save changes",
+      "create": "Create quote",
+      "saving": "Saving…",
+      "correctErrors": "Please correct the highlighted errors.",
+      "saveFailed": "Could not save quote.",
+      "notFound": "Quote not found.",
+      "onlyDraftEditable": "Only DRAFT quotes can be edited.",
+      "updated": "Quote {{number}} updated",
+      "created": "Quote {{number}} created"
+    },
+    "detail": {
+      "missingId": "Missing quote id.",
+      "notFound": "Quote not found.",
+      "client": "Client",
+      "issue": "Issue",
+      "expiry": "Expiry",
+      "lineDescription": "Description",
+      "lineQty": "Qty",
+      "lineUnitPrice": "Unit price",
+      "lineVat": "VAT",
+      "lineTotalHt": "Line total excl. VAT",
+      "edit": "Edit",
+      "send": "Send",
+      "delete": "Delete",
+      "markAccepted": "Mark accepted",
+      "markRejected": "Mark rejected",
+      "convertToInvoice": "Convert to invoice",
+      "convertedTo": "Converted to invoice {{number}}.",
+      "convertedFallback": "Converted to invoice."
+    },
+    "send": {
+      "title": "Send quote",
+      "message": "Once sent, the quote becomes read-only and the status changes to SENT.",
+      "confirm": "Send",
+      "success": "Quote marked as sent."
+    },
+    "accept": {
+      "title": "Mark quote accepted",
+      "message": "The client has accepted this quote. You will then be able to convert it into an invoice.",
+      "confirm": "Mark accepted",
+      "success": "Quote marked as accepted."
+    },
+    "reject": {
+      "title": "Mark quote rejected",
+      "message": "The client has rejected this quote. This action is final — the quote cannot be reopened or edited.",
+      "confirm": "Mark rejected",
+      "success": "Quote marked as rejected."
+    },
+    "convert": {
+      "title": "Convert to invoice",
+      "message": "A new DRAFT invoice will be created from this quote, and the quote will be marked CONVERTED. This cannot be undone.",
+      "confirm": "Convert",
+      "successInvoice": "Invoice {{number}} created.",
+      "failed": "Could not convert quote."
+    },
+    "delete": {
+      "title": "Delete quote",
+      "message": "Delete quote {{number}}? This cannot be undone.",
+      "confirm": "Delete",
+      "success": "Quote {{number}} deleted.",
+      "failed": "Could not delete quote."
+    },
+    "statusUpdateFailed": "Could not update quote status."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "new": "New invoice",
+    "empty": "No invoices yet.",
+    "searchPlaceholder": "Number or client",
+    "noMatchFilters": "No invoices match the current filters.",
+    "backToList": "Back to invoices",
+    "linesHeading": "Lines",
+    "paymentsHeading": "Payments",
+    "noPayments": "No payments recorded yet.",
+    "draftInvoice": "Draft invoice",
+    "filters": {
+      "all": "All",
+      "draft": "Draft",
+      "sent": "Sent",
+      "partiallyPaid": "Partially paid",
+      "paid": "Paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "columns": {
+      "number": "Number",
+      "client": "Client",
+      "issueDate": "Issue date",
+      "dueDate": "Due date",
+      "status": "Status",
+      "totalTtc": "Total incl. VAT",
+      "amountDue": "Amount due"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "PARTIALLY_PAID": "Partially paid",
+      "PAID": "Paid",
+      "OVERDUE": "Overdue",
+      "CANCELLED": "Cancelled"
+    },
+    "totals": {
+      "subtotalHt": "Subtotal excl. VAT",
+      "vat": "VAT",
+      "totalTtc": "Total incl. VAT",
+      "ht": "Excl. VAT",
+      "paid": "Paid",
+      "creditNote": "Credit note",
+      "amountDue": "Amount due",
+      "netAmountDue": "Net amount due"
+    },
+    "form": {
+      "newTitle": "New invoice",
+      "editTitlePrefix": "Edit ",
+      "fallbackTitle": "invoice",
+      "client": "Client",
+      "requiredClient": "Client is required",
+      "issueDate": "Issue date",
+      "dueDate": "Due date",
+      "paymentTerms": "Payment terms",
+      "defaultPaymentTerms": "Payment within 30 days, by bank transfer.",
+      "product": "Product",
+      "adhoc": "— Ad-hoc —",
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "vat": "VAT",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove",
+      "addLine": "Add line",
+      "required": "Required",
+      "tooLong": "Too long",
+      "errorGtZero": "Must be greater than 0",
+      "errorGteZero": "Must be ≥ 0",
+      "saveChanges": "Save changes",
+      "create": "Create invoice",
+      "saving": "Saving…",
+      "correctErrors": "Please correct the highlighted errors.",
+      "saveFailed": "Could not save invoice.",
+      "notFound": "Invoice not found.",
+      "onlyDraftEditable": "Only DRAFT invoices can be edited.",
+      "updated": "Invoice {{number}} updated",
+      "draftUpdated": "Invoice (draft) updated",
+      "draftCreated": "Draft invoice created"
+    },
+    "detail": {
+      "missingId": "Missing invoice id.",
+      "notFound": "Invoice not found.",
+      "client": "Client",
+      "issue": "Issue",
+      "due": "Due",
+      "sent": "Sent",
+      "sentTo": "to {{email}}",
+      "createdFromQuote": "Created from quote — open",
+      "creditNoteLink": "Credit note {{label}} — open",
+      "creditNoteDraft": "— draft",
+      "activeStripeLink": "Active Stripe payment link",
+      "copyLink": "Copy link",
+      "linkCopied": "Link copied.",
+      "copyFailed": "Could not copy the link.",
+      "stalePaymentLink": "The Stripe payment link was invalidated after a credit note was issued. The remaining amount due must be collected manually (transfer, cash, etc.) and recorded here.",
+      "lineDescription": "Description",
+      "lineQty": "Qty",
+      "lineUnitPrice": "Unit price",
+      "lineVat": "VAT",
+      "lineTotalHt": "Line total excl. VAT",
+      "paymentDate": "Date",
+      "paymentAmount": "Amount",
+      "paymentMethod": "Method",
+      "paymentNotes": "Notes",
+      "fullyPaid": "Fully paid",
+      "cancelled": "Cancelled — no actions available.",
+      "pdf": "PDF",
+      "edit": "Edit",
+      "send": "Send",
+      "delete": "Delete",
+      "recordPayment": "Record payment",
+      "markOverdue": "Mark overdue",
+      "creditNote": "Credit note"
+    },
+    "send": {
+      "noEmail": "This client has no email address.",
+      "title": "Send invoice",
+      "message": "Send this invoice by email to {{email}}? A sequential invoice number will be assigned now, and the invoice becomes read-only afterwards. A Stripe payment link will be generated and included in the email when possible.",
+      "confirm": "Send",
+      "success": "Invoice {{number}} sent to {{email}}.",
+      "failed": "Could not send invoice."
+    },
+    "markOverdue": {
+      "title": "Mark invoice overdue",
+      "message": "The due date has passed and the invoice is unpaid. Marking it overdue is informational — you can still record payments afterwards.",
+      "confirm": "Mark overdue",
+      "success": "Invoice marked as overdue."
+    },
+    "pdf": {
+      "failed": "Could not download PDF.",
+      "draftFilenamePrefix": "draft"
+    },
+    "recordPayment": {
+      "nothingDue": "Nothing left to pay on this invoice.",
+      "success": "Payment recorded.",
+      "failed": "Could not record payment."
+    },
+    "delete": {
+      "title": "Delete invoice",
+      "messageWithNumber": "Delete invoice {{number}}? This cannot be undone.",
+      "messageDraft": "Delete this draft invoice? This cannot be undone.",
+      "confirm": "Delete",
+      "successWithNumber": "Invoice {{number}} deleted.",
+      "successDraft": "Draft invoice deleted.",
+      "failed": "Could not delete invoice."
+    },
+    "statusUpdateFailed": "Could not update invoice status.",
+    "creditNoteShortcut": {
+      "created": "Credit note draft created.",
+      "createFailed": "Could not create credit note."
+    },
+    "payment": {
+      "title": "Record payment — {{number}}",
+      "amountDueLabel": "Amount due:",
+      "amount": "Amount (€)",
+      "method": "Method",
+      "date": "Date received",
+      "notes": "Notes (optional)",
+      "submit": "Record payment",
+      "errorRequired": "Required",
+      "errorMin": "Must be greater than 0",
+      "errorMax": "Cannot exceed amount due",
+      "methods": {
+        "Bank transfer": "Bank transfer",
+        "Cash": "Cash",
+        "Card": "Card",
+        "Cheque": "Cheque",
+        "Other": "Other"
+      }
+    }
+  },
+  "creditNotes": {
+    "title": "Credit notes",
+    "empty": "No credit notes yet.",
+    "emptyHint": "Open an invoice and use \"Create credit note\".",
+    "searchPlaceholder": "Number, invoice or client",
+    "noMatchFilters": "No credit notes match the current filters.",
+    "backToList": "Back to credit notes",
+    "draftTitle": "Draft credit note",
+    "linesHeading": "Lines",
+    "reasonHeading": "Reason",
+    "originalInvoice": "Original invoice — {{label}}",
+    "originalInvoiceOpen": "open",
+    "filters": {
+      "all": "All",
+      "draft": "Draft",
+      "issued": "Issued"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "ISSUED": "Issued"
+    },
+    "columns": {
+      "number": "Number",
+      "invoice": "Invoice",
+      "client": "Client",
+      "issueDate": "Issue date",
+      "status": "Status",
+      "totalTtc": "Total incl. VAT"
+    },
+    "totals": {
+      "subtotalHt": "Subtotal excl. VAT",
+      "vat": "VAT",
+      "totalTtc": "Total incl. VAT"
+    },
+    "detail": {
+      "missingId": "Missing credit note id.",
+      "notFound": "Credit note not found.",
+      "client": "Client",
+      "issue": "Issue",
+      "issued": "Issued",
+      "pdf": "PDF",
+      "issueAction": "Issue",
+      "delete": "Delete",
+      "lineDescription": "Description",
+      "lineQty": "Qty",
+      "lineUnitPrice": "Unit price",
+      "lineVat": "VAT",
+      "lineTotalHt": "Line total excl. VAT"
+    },
+    "issue": {
+      "title": "Issue credit note",
+      "message": "A sequential AV-YYYY-NNN number will be assigned now. The credit note becomes read-only afterwards.",
+      "confirm": "Issue",
+      "success": "Credit note {{number}} issued.",
+      "failed": "Could not issue credit note."
+    },
+    "delete": {
+      "title": "Delete credit note",
+      "message": "Delete this draft credit note? This cannot be undone.",
+      "confirm": "Delete",
+      "success": "Credit note deleted.",
+      "failed": "Could not delete credit note."
+    },
+    "pdf": {
+      "failed": "Could not download PDF.",
+      "draftFilenamePrefix": "draft-cn"
+    },
+    "form": {
+      "title": "Credit note for {{number}}",
+      "draftInvoice": "draft invoice",
+      "intro": "Pick the lines to credit and the quantity. Each line is capped at the original quantity invoiced.",
+      "credit": "Credit",
+      "description": "Description",
+      "remaining": "Remaining",
+      "unitPrice": "Unit price",
+      "creditQty": "Credit qty",
+      "alreadyCredited": "Already credited: {{credited}} of {{total}}",
+      "creditTotal": "Credit total incl. VAT: -{{amount}} €",
+      "issueDate": "Issue date",
+      "reason": "Reason",
+      "reasonPlaceholder": "e.g. Wrong quantity invoiced",
+      "required": "Required",
+      "noLinesSelected": "Select at least one line with a quantity greater than 0.",
+      "createDraft": "Create draft"
+    }
+  }
+}

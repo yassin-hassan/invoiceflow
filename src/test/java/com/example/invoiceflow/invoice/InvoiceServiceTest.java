@@ -24,11 +24,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,6 +52,7 @@ class InvoiceServiceTest {
     @Mock private UserService userService;
     @Mock private EmailService emailService;
     @Mock private StripeService stripeService;
+    @Mock private MessageSource messageSource;
     @Mock private InvoicePdfService invoicePdfService;
 
     @InjectMocks
@@ -61,6 +64,9 @@ class InvoiceServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("stub");
+        lenient().when(messageSource.getMessage(anyString(), any(), anyString(), any(Locale.class))).thenReturn("stub");
+
         user = new User();
         user.setId(UUID.randomUUID());
         user.setEmail("user@example.com");
@@ -402,7 +408,7 @@ class InvoiceServiceTest {
         when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
         when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
         when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+        when(invoicePdfService.generate(any(), any())).thenReturn(new byte[]{1, 2, 3});
 
         Invoice result = invoiceService.sendInvoice("user@example.com", invoice.getId());
 
@@ -441,7 +447,7 @@ class InvoiceServiceTest {
         when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
         when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
         when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+        when(invoicePdfService.generate(any(), any())).thenReturn(new byte[]{1, 2, 3});
         when(stripeService.createPaymentLink(any(), anyString(), any())).thenReturn(link);
 
         Invoice result = invoiceService.sendInvoice("user@example.com", invoice.getId());
@@ -463,7 +469,7 @@ class InvoiceServiceTest {
         when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
         when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
         when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+        when(invoicePdfService.generate(any(), any())).thenReturn(new byte[]{1, 2, 3});
         when(stripeService.createPaymentLink(any(), anyString(), any()))
                 .thenThrow(new RuntimeException("Stripe down"));
 
@@ -520,7 +526,7 @@ class InvoiceServiceTest {
         when(invoiceRepository.findByIdAndUser(invoice.getId(), user)).thenReturn(Optional.of(invoice));
         when(invoiceRepository.findMaxNumberSuffixByUserAndPrefix(eq(user), anyString())).thenReturn(0);
         when(invoiceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(invoicePdfService.generate(any())).thenReturn(new byte[]{1, 2, 3});
+        when(invoicePdfService.generate(any(), any())).thenReturn(new byte[]{1, 2, 3});
         doThrow(new IllegalStateException("smtp down")).when(emailService)
                 .sendInvoice(anyString(), anyString(), anyString(), anyString(), any());
 

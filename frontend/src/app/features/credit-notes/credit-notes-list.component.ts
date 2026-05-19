@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslateModule } from '@ngx-translate/core';
 import { CreditNotesService } from './credit-notes.service';
 import { CreditNote, CreditNoteStatus } from './credit-note.model';
 import { CreditNoteStatusChipComponent } from './credit-note-status-chip.component';
@@ -22,12 +23,12 @@ type StatusFilter = 'ALL' | CreditNoteStatus;
     CommonModule, DatePipe, DecimalPipe, FormsModule,
     MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule,
     MatButtonToggleModule, MatProgressSpinnerModule, MatIconModule,
-    CreditNoteStatusChipComponent
+    CreditNoteStatusChipComponent, TranslateModule
   ],
   template: `
     <div style="padding:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h1 style="margin:0;">Credit notes</h1>
+        <h1 style="margin:0;">{{ 'creditNotes.title' | translate }}</h1>
       </div>
 
       <ng-container *ngIf="service.loading()">
@@ -46,16 +47,16 @@ type StatusFilter = 'ALL' | CreditNoteStatus;
         <ng-container *ngIf="service.creditNotes().length === 0">
           <div style="text-align:center; padding:48px; color:#777;">
             <mat-icon style="font-size:48px; width:48px; height:48px;">undo</mat-icon>
-            <p style="margin-top:16px;">No credit notes yet.</p>
-            <p style="font-size:0.9rem;">Open an invoice and use “Create credit note”.</p>
+            <p style="margin-top:16px;">{{ 'creditNotes.empty' | translate }}</p>
+            <p style="font-size:0.9rem;">{{ 'creditNotes.emptyHint' | translate }}</p>
           </div>
         </ng-container>
 
         <ng-container *ngIf="service.creditNotes().length > 0">
           <div style="display:flex; gap:16px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
             <mat-form-field appearance="outline" style="width:320px; margin:0;">
-              <mat-label>Search</mat-label>
-              <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Number, invoice or client" />
+              <mat-label>{{ 'common.search' | translate }}</mat-label>
+              <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" [placeholder]="'creditNotes.searchPlaceholder' | translate" />
               <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
 
@@ -63,14 +64,14 @@ type StatusFilter = 'ALL' | CreditNoteStatus;
               [value]="statusFilter()"
               (change)="statusFilter.set($event.value)"
               style="height:40px;">
-              <mat-button-toggle value="ALL">All</mat-button-toggle>
-              <mat-button-toggle value="DRAFT">Draft</mat-button-toggle>
-              <mat-button-toggle value="ISSUED">Issued</mat-button-toggle>
+              <mat-button-toggle value="ALL">{{ 'creditNotes.filters.all' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="DRAFT">{{ 'creditNotes.filters.draft' | translate }}</mat-button-toggle>
+              <mat-button-toggle value="ISSUED">{{ 'creditNotes.filters.issued' | translate }}</mat-button-toggle>
             </mat-button-toggle-group>
           </div>
 
           <ng-container *ngIf="visible().length === 0">
-            <div style="padding:24px; color:#777;">No credit notes match the current filters.</div>
+            <div style="padding:24px; color:#777;">{{ 'creditNotes.noMatchFilters' | translate }}</div>
           </ng-container>
 
           <table
@@ -82,37 +83,37 @@ type StatusFilter = 'ALL' | CreditNoteStatus;
             style="width:100%; background:white;">
 
             <ng-container matColumnDef="number">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Number</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'creditNotes.columns.number' | translate }}</th>
               <td mat-cell *matCellDef="let cn">
                 <span *ngIf="cn.number; else draftLabel">{{ cn.number }}</span>
-                <ng-template #draftLabel><span style="color:#999; font-style:italic;">— Draft —</span></ng-template>
+                <ng-template #draftLabel><span style="color:#999; font-style:italic;">{{ 'common.draft' | translate }}</span></ng-template>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="invoice">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Invoice</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'creditNotes.columns.invoice' | translate }}</th>
               <td mat-cell *matCellDef="let cn">{{ cn.originalInvoiceNumber || '—' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="client">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Client</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'creditNotes.columns.client' | translate }}</th>
               <td mat-cell *matCellDef="let cn">{{ cn.clientName }}</td>
             </ng-container>
 
             <ng-container matColumnDef="issueDate">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Issue date</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'creditNotes.columns.issueDate' | translate }}</th>
               <td mat-cell *matCellDef="let cn">{{ cn.issueDate | date:'mediumDate' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'creditNotes.columns.status' | translate }}</th>
               <td mat-cell *matCellDef="let cn">
                 <app-credit-note-status-chip [status]="cn.status"></app-credit-note-status-chip>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="totalInclVat">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">Total TTC</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header style="text-align:right;">{{ 'creditNotes.columns.totalTtc' | translate }}</th>
               <td mat-cell *matCellDef="let cn" style="text-align:right; color:#b71c1c;">
                 -{{ cn.totalInclVat | number:'1.2-2' }} €
               </td>
