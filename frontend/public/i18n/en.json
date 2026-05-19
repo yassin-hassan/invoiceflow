@@ -15,7 +15,8 @@
     "back": "Back",
     "search": "Search",
     "actions": "Actions",
-    "details": "Details"
+    "details": "Details",
+    "errorGeneric": "Something went wrong."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -24,6 +25,7 @@
     "quotes": "Quotes",
     "invoices": "Invoices",
     "creditNotes": "Credit notes",
+    "admin": "Administration",
     "logout": "Logout"
   },
   "language": {
@@ -614,6 +616,92 @@
       "required": "Required",
       "noLinesSelected": "Select at least one line with a quantity greater than 0.",
       "createDraft": "Create draft"
+    }
+  },
+  "admin": {
+    "nav": {
+      "users": "Users",
+      "auditLogs": "Audit log"
+    },
+    "users": {
+      "title": "User management",
+      "you": "you",
+      "cannotActOnSelf": "You cannot act on your own account",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "clients": "Clients",
+        "invoices": "Invoices",
+        "revenue": "Revenue",
+        "lastLogin": "Last login"
+      },
+      "role": {
+        "USER": "User",
+        "ADMIN": "Administrator"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Disabled"
+      },
+      "actions": {
+        "disable": "Disable account",
+        "enable": "Enable account",
+        "sendPasswordReset": "Send password reset link"
+      },
+      "confirm": {
+        "disableTitle": "Disable account",
+        "disable": "Disable {{email}}? The user will no longer be able to sign in.",
+        "enableTitle": "Enable account",
+        "enable": "Re-enable {{email}}?",
+        "roleTitle": "Change role",
+        "role": "Set {{email}}'s role to {{role}}?",
+        "resetTitle": "Reset password",
+        "reset": "Send a password reset link to {{email}}?"
+      },
+      "feedback": {
+        "statusChanged": "Account status updated.",
+        "roleChanged": "Role updated.",
+        "resetSent": "Reset link sent."
+      }
+    },
+    "audit": {
+      "title": "Audit log",
+      "export": "Export CSV",
+      "columns": {
+        "time": "Time",
+        "actor": "Actor",
+        "action": "Action",
+        "resource": "Resource",
+        "ip": "IP",
+        "details": "Details"
+      },
+      "filters": {
+        "actor": "Actor (email)",
+        "action": "Action",
+        "actionAll": "All",
+        "from": "From",
+        "to": "To",
+        "apply": "Apply",
+        "reset": "Reset"
+      },
+      "action": {
+        "LOGIN_SUCCESS": "Login success",
+        "LOGIN_FAILED": "Login failed",
+        "PASSWORD_RESET_REQUESTED": "Password reset requested",
+        "PASSWORD_CHANGED": "Password changed",
+        "TWO_FA_ENABLED": "2FA enabled",
+        "TWO_FA_DISABLED": "2FA disabled",
+        "INVOICE_SENT": "Invoice sent",
+        "INVOICE_CANCELLED": "Invoice cancelled",
+        "INVOICE_PAYMENT_RECORDED": "Payment recorded",
+        "CREDIT_NOTE_ISSUED": "Credit note issued",
+        "STRIPE_PAYMENT_CONFIRMED": "Stripe payment confirmed",
+        "ADMIN_USER_STATUS_CHANGED": "User status changed",
+        "ADMIN_USER_ROLE_CHANGED": "User role changed",
+        "ADMIN_USER_PASSWORD_RESET_SENT": "Password reset sent",
+        "ACCOUNT_DELETED": "Account deleted"
+      }
     }
   }
 }

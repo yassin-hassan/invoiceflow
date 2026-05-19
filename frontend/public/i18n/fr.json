@@ -15,7 +15,8 @@
     "back": "Retour",
     "search": "Rechercher",
     "actions": "Actions",
-    "details": "Détails"
+    "details": "Détails",
+    "errorGeneric": "Une erreur est survenue."
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -24,6 +25,7 @@
     "quotes": "Devis",
     "invoices": "Factures",
     "creditNotes": "Notes de crédit",
+    "admin": "Administration",
     "logout": "Déconnexion"
   },
   "language": {
@@ -614,6 +616,92 @@
       "required": "Obligatoire",
       "noLinesSelected": "Sélectionnez au moins une ligne avec une quantité supérieure à 0.",
       "createDraft": "Créer le brouillon"
+    }
+  },
+  "admin": {
+    "nav": {
+      "users": "Utilisateurs",
+      "auditLogs": "Journal d'audit"
+    },
+    "users": {
+      "title": "Gestion des utilisateurs",
+      "you": "vous",
+      "cannotActOnSelf": "Vous ne pouvez pas agir sur votre propre compte",
+      "columns": {
+        "email": "E-mail",
+        "role": "Rôle",
+        "status": "Statut",
+        "clients": "Clients",
+        "invoices": "Factures",
+        "revenue": "CA",
+        "lastLogin": "Dernière connexion"
+      },
+      "role": {
+        "USER": "Utilisateur",
+        "ADMIN": "Administrateur"
+      },
+      "status": {
+        "active": "Actif",
+        "inactive": "Désactivé"
+      },
+      "actions": {
+        "disable": "Désactiver le compte",
+        "enable": "Activer le compte",
+        "sendPasswordReset": "Envoyer un lien de réinitialisation"
+      },
+      "confirm": {
+        "disableTitle": "Désactiver le compte",
+        "disable": "Désactiver le compte de {{email}} ? L'utilisateur ne pourra plus se connecter.",
+        "enableTitle": "Activer le compte",
+        "enable": "Réactiver le compte de {{email}} ?",
+        "roleTitle": "Changer le rôle",
+        "role": "Définir le rôle de {{email}} sur {{role}} ?",
+        "resetTitle": "Réinitialiser le mot de passe",
+        "reset": "Envoyer un lien de réinitialisation à {{email}} ?"
+      },
+      "feedback": {
+        "statusChanged": "Statut du compte mis à jour.",
+        "roleChanged": "Rôle mis à jour.",
+        "resetSent": "Lien de réinitialisation envoyé."
+      }
+    },
+    "audit": {
+      "title": "Journal d'audit",
+      "export": "Exporter CSV",
+      "columns": {
+        "time": "Horodatage",
+        "actor": "Acteur",
+        "action": "Action",
+        "resource": "Ressource",
+        "ip": "IP",
+        "details": "Détails"
+      },
+      "filters": {
+        "actor": "Acteur (e-mail)",
+        "action": "Action",
+        "actionAll": "Toutes",
+        "from": "Du",
+        "to": "Au",
+        "apply": "Appliquer",
+        "reset": "Réinitialiser"
+      },
+      "action": {
+        "LOGIN_SUCCESS": "Connexion réussie",
+        "LOGIN_FAILED": "Échec de connexion",
+        "PASSWORD_RESET_REQUESTED": "Réinit. mot de passe demandée",
+        "PASSWORD_CHANGED": "Mot de passe modifié",
+        "TWO_FA_ENABLED": "2FA activé",
+        "TWO_FA_DISABLED": "2FA désactivé",
+        "INVOICE_SENT": "Facture envoyée",
+        "INVOICE_CANCELLED": "Facture annulée",
+        "INVOICE_PAYMENT_RECORDED": "Paiement enregistré",
+        "CREDIT_NOTE_ISSUED": "Note de crédit émise",
+        "STRIPE_PAYMENT_CONFIRMED": "Paiement Stripe confirmé",
+        "ADMIN_USER_STATUS_CHANGED": "Statut utilisateur modifié",
+        "ADMIN_USER_ROLE_CHANGED": "Rôle utilisateur modifié",
+        "ADMIN_USER_PASSWORD_RESET_SENT": "Réinit. mot de passe envoyée",
+        "ACCOUNT_DELETED": "Compte supprimé"
+      }
     }
   }
 }

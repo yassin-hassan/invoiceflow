@@ -1,9 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { User } from '../../models/user.model';
 
 const API = environment.apiUrl;
 const TOKEN_KEY = 'auth_token';
@@ -33,8 +35,22 @@ export interface RegisterRequest {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isLoggedIn = signal<boolean>(this.hasToken());
+  currentUser = signal<User | null>(null);
+  isAdmin = computed(() => this.currentUser()?.role === 'ADMIN');
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    if (this.isLoggedIn()) this.refreshCurrentUser().subscribe();
+  }
+
+  refreshCurrentUser(): Observable<User | null> {
+    return this.http.get<User>(`${API}/users/me`).pipe(
+      tap(user => this.currentUser.set(user)),
+      catchError(() => {
+        this.currentUser.set(null);
+        return of(null);
+      })
+    );
+  }
 
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${API}/auth/login`, request);
@@ -71,6 +87,7 @@ export class AuthService {
   saveToken(token: string): void {
     localStorage.setItem(TOKEN_KEY, token);
     this.isLoggedIn.set(true);
+    this.refreshCurrentUser().subscribe();
   }
 
   getToken(): string | null {
@@ -80,6 +97,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     this.isLoggedIn.set(false);
+    this.currentUser.set(null);
     this.router.navigate(['/login']);
   }
 

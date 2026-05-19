@@ -1,3 +1,5 @@
+export type Role = 'USER' | 'ADMIN';
+
 export interface User {
   id: string;
   email: string;
@@ -9,4 +11,5 @@ export interface User {
   logoUrl?: string;
   preferredLanguage: string;
   twoFaEnabled: boolean;
+  role: Role;
 }

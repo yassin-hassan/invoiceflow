@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -13,6 +14,7 @@ import { LanguageToggleComponent } from '../language-toggle/language-toggle.comp
   selector: 'app-layout',
   standalone: true,
   imports: [
+    CommonModule,
     RouterOutlet, RouterLink, RouterLinkActive,
     MatSidenavModule, MatToolbarModule, MatListModule,
     MatIconModule, MatButtonModule,
@@ -48,6 +50,10 @@ import { LanguageToggleComponent } from '../language-toggle/language-toggle.comp
           <a mat-list-item routerLink="/credit-notes" routerLinkActive="active-link">
             <mat-icon matListItemIcon>undo</mat-icon>
             <span matListItemTitle>{{ 'nav.creditNotes' | translate }}</span>
+          </a>
+          <a *ngIf="auth.isAdmin()" mat-list-item routerLink="/admin" routerLinkActive="active-link">
+            <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
+            <span matListItemTitle>{{ 'nav.admin' | translate }}</span>
           </a>
         </mat-nav-list>
         <div style="position: absolute; bottom: 0; width: 100%; padding: 8px;">
