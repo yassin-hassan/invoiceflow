@@ -1,5 +1,7 @@
 package com.example.invoiceflow.stripe;
 
+import com.example.invoiceflow.audit.AuditAction;
+import com.example.invoiceflow.audit.AuditLogService;
 import com.example.invoiceflow.exception.ResourceNotFoundException;
 import com.example.invoiceflow.invoice.Invoice;
 import com.example.invoiceflow.invoice.InvoiceLine;
@@ -32,6 +34,7 @@ public class StripeWebhookService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final StripeService stripeService;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public void handleEvent(Event event) {
@@ -107,6 +110,12 @@ public class StripeWebhookService {
             invalidateStripePaymentLink(invoice);
         }
         invoiceRepository.save(invoice);
+        auditLogService.recordAnonymous(AuditAction.STRIPE_PAYMENT_CONFIRMED, "Invoice", invoice.getId().toString(),
+                Map.of(
+                        "userId", invoice.getUser().getId().toString(),
+                        "amount", amount.toPlainString(),
+                        "paymentIntentId", paymentIntentId,
+                        "status", invoice.getStatus().name()));
         log.info("Recorded Stripe payment {} for invoice {} (amount={}, status={})",
                 paymentIntentId, invoice.getId(), amount, invoice.getStatus());
     }

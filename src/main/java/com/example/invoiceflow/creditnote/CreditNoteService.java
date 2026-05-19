@@ -1,5 +1,7 @@
 package com.example.invoiceflow.creditnote;
 
+import com.example.invoiceflow.audit.AuditAction;
+import com.example.invoiceflow.audit.AuditLogService;
 import com.example.invoiceflow.creditnote.dto.CreateCreditNoteRequest;
 import com.example.invoiceflow.creditnote.dto.CreditNoteLineRequest;
 import com.example.invoiceflow.creditnote.dto.UpdateCreditNoteRequest;
@@ -44,6 +46,7 @@ public class CreditNoteService {
     private final InvoiceLineRepository invoiceLineRepository;
     private final UserService userService;
     private final StripeService stripeService;
+    private final AuditLogService auditLogService;
 
     public List<CreditNote> list(String email) {
         User user = userService.getByEmail(email);
@@ -118,7 +121,10 @@ public class CreditNoteService {
 
         invalidateStripePaymentLink(invoice);
 
-        return creditNoteRepository.saveAndFlush(creditNote);
+        CreditNote saved = creditNoteRepository.saveAndFlush(creditNote);
+        auditLogService.record(AuditAction.CREDIT_NOTE_ISSUED, "CreditNote", saved.getId().toString(),
+                Map.of("number", saved.getNumber(), "invoiceId", invoice.getId().toString()));
+        return saved;
     }
 
     private void invalidateStripePaymentLink(Invoice invoice) {

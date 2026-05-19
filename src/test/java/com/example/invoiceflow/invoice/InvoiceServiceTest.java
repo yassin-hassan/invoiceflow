@@ -54,6 +54,7 @@ class InvoiceServiceTest {
     @Mock private StripeService stripeService;
     @Mock private MessageSource messageSource;
     @Mock private InvoicePdfService invoicePdfService;
+    @Mock private com.example.invoiceflow.audit.AuditLogService auditLogService;
 
     @InjectMocks
     private InvoiceService invoiceService;

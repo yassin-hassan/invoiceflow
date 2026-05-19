@@ -46,6 +46,7 @@ class CreditNoteServiceTest {
     @Mock private InvoiceLineRepository invoiceLineRepository;
     @Mock private UserService userService;
     @Mock private StripeService stripeService;
+    @Mock private com.example.invoiceflow.audit.AuditLogService auditLogService;
 
     @InjectMocks
     private CreditNoteService creditNoteService;

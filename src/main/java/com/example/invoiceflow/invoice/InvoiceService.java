@@ -1,5 +1,7 @@
 package com.example.invoiceflow.invoice;
 
+import com.example.invoiceflow.audit.AuditAction;
+import com.example.invoiceflow.audit.AuditLogService;
 import com.example.invoiceflow.auth.EmailService;
 import com.example.invoiceflow.client.Client;
 import com.example.invoiceflow.client.ClientRepository;
@@ -52,6 +54,7 @@ public class InvoiceService {
     private final EmailService emailService;
     private final StripeService stripeService;
     private final MessageSource messageSource;
+    private final AuditLogService auditLogService;
     @Lazy
     private final InvoicePdfService invoicePdfService;
 
@@ -199,7 +202,10 @@ public class InvoiceService {
         String body = buildInvoiceBody(issued, user, locale);
         emailService.sendInvoice(recipient, subject, body, filename, pdf);
 
-        return invoiceRepository.save(issued);
+        Invoice saved = invoiceRepository.save(issued);
+        auditLogService.record(AuditAction.INVOICE_SENT, "Invoice", saved.getId().toString(),
+                Map.of("number", saved.getNumber(), "clientEmail", recipient));
+        return saved;
     }
 
     private void tryAttachPaymentLink(Invoice invoice, User user, Locale locale) {
@@ -349,7 +355,13 @@ public class InvoiceService {
             invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
         }
 
-        return invoiceRepository.save(invoice);
+        Invoice saved = invoiceRepository.save(invoice);
+        auditLogService.record(AuditAction.INVOICE_PAYMENT_RECORDED, "Invoice", saved.getId().toString(),
+                Map.of(
+                        "amount", request.getAmount().toPlainString(),
+                        "method", request.getMethod() == null ? "" : request.getMethod(),
+                        "status", saved.getStatus().name()));
+        return saved;
     }
 
     private void addLinesToInvoice(Invoice invoice, List<InvoiceLineRequest> lineRequests, User user) {

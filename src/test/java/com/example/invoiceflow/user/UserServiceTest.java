@@ -34,6 +34,7 @@ class UserServiceTest {
     @Mock private AccountVerificationRepository verificationRepository;
     @Mock private com.example.invoiceflow.auth.TwoFactorVerificationRepository twoFactorRepository;
     @Mock private EmailService emailService;
+    @Mock private com.example.invoiceflow.audit.AuditLogService auditLogService;
 
     @InjectMocks
     private UserService userService;

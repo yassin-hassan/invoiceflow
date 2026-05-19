@@ -1,5 +1,7 @@
 package com.example.invoiceflow.user;
 
+import com.example.invoiceflow.audit.AuditAction;
+import com.example.invoiceflow.audit.AuditLogService;
 import com.example.invoiceflow.auth.AccountVerification;
 import com.example.invoiceflow.auth.AccountVerificationRepository;
 import com.example.invoiceflow.auth.EmailService;
@@ -33,6 +35,7 @@ public class UserService {
     private final AccountVerificationRepository verificationRepository;
     private final TwoFactorVerificationRepository twoFactorRepository;
     private final EmailService emailService;
+    private final AuditLogService auditLogService;
 
     public User getByEmail(String email) {
         return userRepository.findByEmail(email)
@@ -100,6 +103,7 @@ public class UserService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+        auditLogService.record(AuditAction.PASSWORD_CHANGED, "User", user.getId().toString(), null);
     }
 
     @Transactional
@@ -113,6 +117,7 @@ public class UserService {
         user.setTwoFaPhone(request.getPhone());
         user.set2faEnabled(true);
         userRepository.save(user);
+        auditLogService.record(AuditAction.TWO_FA_ENABLED, "User", user.getId().toString(), null);
     }
 
     @Transactional
@@ -127,6 +132,7 @@ public class UserService {
         user.setTwoFaPhone(null);
         twoFactorRepository.deleteByUserId(user.getId());
         userRepository.save(user);
+        auditLogService.record(AuditAction.TWO_FA_DISABLED, "User", user.getId().toString(), null);
     }
 
     @Transactional

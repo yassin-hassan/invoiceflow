@@ -1,5 +1,7 @@
 package com.example.invoiceflow.auth;
 
+import com.example.invoiceflow.audit.AuditAction;
+import com.example.invoiceflow.audit.AuditLogService;
 import com.example.invoiceflow.auth.dto.LoginRequest;
 import com.example.invoiceflow.auth.dto.LoginResponse;
 import com.example.invoiceflow.auth.dto.TwoFactorVerifyRequest;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -35,23 +38,31 @@ public class AuthService {
     private final TwoFactorVerificationRepository twoFactorRepository;
     private final EmailService emailService;
     private final SmsService smsService;
+    private final AuditLogService auditLogService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+        String email = request.getEmail().toLowerCase().trim();
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            recordLoginFailed(email, "unknown_user");
+            throw new BadCredentialsException("Invalid email or password");
+        }
 
         if (isLocked(user)) {
+            recordLoginFailed(email, "locked");
             throw new AccountLockedException();
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             handleFailedAttempt(user);
+            recordLoginFailed(email, "bad_password");
             throw new BadCredentialsException("Invalid email or password");
         }
 
         if (!user.isEmailVerified()) {
+            recordLoginFailed(email, "email_not_verified");
             throw new EmailNotVerifiedException();
         }
 
@@ -61,7 +72,13 @@ public class AuthService {
             return initiate2fa(user);
         }
 
+        auditLogService.recordForEmail(AuditAction.LOGIN_SUCCESS, user.getEmail(), "User", user.getId().toString(), null);
         return LoginResponse.withToken(jwtService.generateToken(user.getEmail(), user.getRole()));
+    }
+
+    private void recordLoginFailed(String email, String reason) {
+        auditLogService.recordIndependentForEmail(
+                AuditAction.LOGIN_FAILED, email, null, null, Map.of("reason", reason));
     }
 
     @Transactional
@@ -88,6 +105,7 @@ public class AuthService {
         }
 
         twoFactorRepository.delete(verification);
+        auditLogService.recordForEmail(AuditAction.LOGIN_SUCCESS, user.getEmail(), "User", user.getId().toString(), Map.of("via", "2fa"));
         return LoginResponse.withToken(jwtService.generateToken(user.getEmail(), user.getRole()));
     }
 
@@ -124,6 +142,9 @@ public class AuthService {
             String token = UUID.randomUUID().toString();
             passwordResetRepository.save(new PasswordResetVerification(user, token, LocalDateTime.now().plusHours(1)));
             emailService.sendPasswordResetEmail(user.getEmail(), token, I18nConfig.toLocale(user.getPreferredLanguage()));
+            auditLogService.recordIndependentForEmail(
+                    AuditAction.PASSWORD_RESET_REQUESTED, user.getEmail(),
+                    "User", user.getId().toString(), null);
         });
     }
 

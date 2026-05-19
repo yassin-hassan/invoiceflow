@@ -52,6 +52,9 @@ class AuthServiceTest {
     @Mock
     private SmsService smsService;
 
+    @Mock
+    private com.example.invoiceflow.audit.AuditLogService auditLogService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -60,6 +63,7 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         user = new User();
+        user.setId(UUID.randomUUID());
         user.setEmail("test@example.com");
         user.setPasswordHash("hashed");
         user.setEmailVerified(true);

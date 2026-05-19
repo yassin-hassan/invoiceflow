@@ -41,6 +41,7 @@ class StripeWebhookServiceTest {
     @Mock private InvoiceRepository invoiceRepository;
     @Mock private PaymentRepository paymentRepository;
     @Mock private StripeService stripeService;
+    @Mock private com.example.invoiceflow.audit.AuditLogService auditLogService;
 
     @InjectMocks
     private StripeWebhookService service;
