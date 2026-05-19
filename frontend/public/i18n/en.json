@@ -716,6 +716,25 @@
       "download": "Download my data",
       "downloading": "Preparing your archive…",
       "failed": "Could not generate the export."
+    },
+    "danger": {
+      "heading": "Danger zone",
+      "warning": "Deleting your account is permanent. All your data (clients, quotes, invoices, credit notes, products, payments, audit log) will be erased immediately and cannot be recovered.\n\nBelgian law requires you to keep invoices for 7 years. Download your data using the section above before continuing.",
+      "delete": "Delete my account",
+      "dialog": {
+        "title": "Permanently delete your account?",
+        "body": "This action is irreversible. To confirm, type your email address and current password.",
+        "emailLabel": "Your email address",
+        "emailMismatch": "The email does not match your account.",
+        "passwordLabel": "Current password",
+        "passwordRequired": "Password is required.",
+        "acknowledge": "I confirm I have downloaded a copy of my data.",
+        "confirm": "Delete my account",
+        "deleting": "Deleting…"
+      },
+      "success": "Your account has been deleted.",
+      "wrongPassword": "Incorrect password.",
+      "failed": "Could not delete the account."
     }
   },
   "exports": {

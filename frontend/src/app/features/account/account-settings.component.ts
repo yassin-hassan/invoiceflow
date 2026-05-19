@@ -5,10 +5,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { UserDataExportService } from '../../core/services/user-data-export.service';
+import { AuthService } from '../../core/services/auth.service';
 import { extractErrorDetail } from '../../core/utils/http-errors';
+import { DeleteAccountDialogComponent, DeleteAccountDialogData } from './delete-account-dialog.component';
 
 @Component({
   selector: 'app-account-settings',
@@ -16,6 +19,7 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
   imports: [
     CommonModule,
     MatCardModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule,
+    MatDialogModule,
     TranslateModule
   ],
   template: `
@@ -41,11 +45,30 @@ import { extractErrorDetail } from '../../core/utils/http-errors';
           </button>
         </mat-card-actions>
       </mat-card>
+
+      <mat-card style="margin-top:24px; border:1px solid #f4c7c7;">
+        <mat-card-header>
+          <mat-card-title style="color:#b71c1c;">{{ 'account.danger.heading' | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p style="color:#555; line-height:1.5; white-space:pre-line;">
+            {{ 'account.danger.warning' | translate }}
+          </p>
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button mat-raised-button color="warn" (click)="openDelete()">
+            <mat-icon>delete_forever</mat-icon>
+            <span style="margin-left:4px;">{{ 'account.danger.delete' | translate }}</span>
+          </button>
+        </mat-card-actions>
+      </mat-card>
     </div>
   `
 })
 export class AccountSettingsComponent {
   private exportService = inject(UserDataExportService);
+  private auth = inject(AuthService);
+  private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private t = inject(TranslateService);
 
@@ -74,5 +97,23 @@ export class AccountSettingsComponent {
         );
       }
     });
+  }
+
+  openDelete(): void {
+    const user = this.auth.currentUser();
+    if (!user?.email) return;
+    const data: DeleteAccountDialogData = { userEmail: user.email };
+    this.dialog.open(DeleteAccountDialogComponent, { data, disableClose: true })
+      .afterClosed()
+      .subscribe(result => {
+        if (result === true) {
+          this.snackBar.open(
+            this.t.instant('account.danger.success'),
+            this.t.instant('common.ok'),
+            { duration: 4000 }
+          );
+          this.auth.logout();
+        }
+      });
   }
 }

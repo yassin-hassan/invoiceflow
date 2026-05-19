@@ -729,6 +729,25 @@
       "download": "Télécharger mes données",
       "downloading": "Préparation de l'archive...",
       "failed": "Impossible de générer l'export."
+    },
+    "danger": {
+      "heading": "Zone dangereuse",
+      "warning": "La suppression de votre compte est définitive. Toutes vos données (clients, devis, factures, notes de crédit, produits, paiements, journal d'audit) seront effacées immédiatement et ne pourront pas être restaurées.\n\nLa législation belge vous oblige à conserver vos factures pendant 7 ans. Téléchargez vos données via la section ci-dessus avant de continuer.",
+      "delete": "Supprimer mon compte",
+      "dialog": {
+        "title": "Supprimer définitivement votre compte ?",
+        "body": "Cette action est irréversible. Pour confirmer, saisissez votre adresse e-mail et votre mot de passe actuel.",
+        "emailLabel": "Votre adresse e-mail",
+        "emailMismatch": "L'adresse e-mail ne correspond pas à votre compte.",
+        "passwordLabel": "Mot de passe actuel",
+        "passwordRequired": "Mot de passe requis.",
+        "acknowledge": "Je confirme avoir téléchargé une copie de mes données.",
+        "confirm": "Supprimer mon compte",
+        "deleting": "Suppression…"
+      },
+      "success": "Votre compte a été supprimé.",
+      "wrongPassword": "Mot de passe incorrect.",
+      "failed": "Impossible de supprimer le compte."
     }
   }
 }

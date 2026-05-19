@@ -6,6 +6,7 @@ import com.example.invoiceflow.gdpr.UserDataExportService;
 import com.example.invoiceflow.user.dto.ChangeLanguageRequest;
 import com.example.invoiceflow.user.dto.ChangePasswordRequest;
 import com.example.invoiceflow.user.dto.CreateUserRequest;
+import com.example.invoiceflow.user.dto.DeleteAccountRequest;
 import com.example.invoiceflow.user.dto.UpdateProfileRequest;
 import com.example.invoiceflow.user.dto.UserResponse;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
     private final UserDataExportService userDataExportService;
+    private final UserAccountDeletionService userAccountDeletionService;
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
@@ -90,6 +92,14 @@ public class UserController {
             @RequestParam("file") MultipartFile file) {
         User updated = userService.updateLogo(principal.getUsername(), file);
         return ResponseEntity.ok(userMapper.toResponse(updated));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody DeleteAccountRequest request) {
+        userAccountDeletionService.deleteAccount(principal.getUsername(), request.getCurrentPassword());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me/data-export")
